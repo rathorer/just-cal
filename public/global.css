@@ -1,0 +1,21 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+/* daisyUI is automatically included via the plugin */
+
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+@utility .scrollbar-hidden {
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
