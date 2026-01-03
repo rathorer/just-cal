@@ -1,7 +1,7 @@
-# Tauri + React
+# Tauri + React + Vite + DaisyUI and tailwind
 
-This template should help get you started developing with Tauri and React in Vite.
+A calendar app for windows, simple yet powerfull. It can be used as fully offline, without any account login. Use it like a table calendar, where you can write your task for a day, and manually check what is due today.
 
 ## Recommended IDE Setup
 
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+[Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
