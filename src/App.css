@@ -1,3 +1,23 @@
+
+.colors{
+  color: #DCC7F2;
+  color: #F5F6FA;
+  color: #C9B7E9;
+  color: #F6C2CF;
+  color: #60a5fa;
+  color: #3b82f6;
+  color: #8AC7AD;
+  color: #F9D3D2;
+  color: #FFD700;
+  color: #191970;
+  color: #87CEEB;
+  color: #50C878;
+  color: #FFD700;
+  color: #333333;
+  color: #FFA500;
+  color: #FFFFFF;
+}
+
 .logo.vite:hover {
   filter: drop-shadow(0 0 2em #747bff);
 }

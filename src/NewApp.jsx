@@ -1,10 +1,15 @@
 import SettingsIcon from './components/icons/setting'
-import BarsIcon from './components/icons/bars'
+import BarsIcon from './components/icons/bars';
+import ThemeLightIcon from './components/icons/themeLight';
+import ThemeDarkIcon from './components/icons/themeDark';
 import Day from './components/Day';
 import JustDate from './utilities/justDate';
 import { useMemo, useState, useRef } from 'react';
+import { useTheme } from './hooks/useTheme';
+import { event } from '@tauri-apps/api';
 
 function NewApp() {
+  const { theme, toggleTheme } = useTheme();
   const [monthDays, setMonthDays] = useState([]);
   const [weekDays, setWeekDays] = useState([]);
   const [monthStart, setMonthStart] = useState(0);
@@ -44,6 +49,14 @@ function NewApp() {
   const scrollRef = useRef(null);
   // Store the previous scrollLeft position to determine direction/movement
   const [prevScrollLeft, setPrevScrollLeft] = useState(0);
+  const handleDayClick = (event, t) => {
+    console.log(event);
+    let div = event && event.target.children[0];//.children
+    console.log(div.tagName);
+    if(div && div.tagName === 'H2'){
+      alert(monthName + ' '+ div.innerText);
+    }
+  };
   const handleWheelScroll = (event) => {
     console.log("trying to scroll");
     if (containerRef.current) {
@@ -66,20 +79,24 @@ function NewApp() {
       // Update the previous position
       setPrevScrollLeft(scrollLeft);
     }
-  }
+  };
 
   return (
-    <div className="h-screen flex flex-col bg-base-200">
+    <div className="h-screen flex flex-col bg-header-base1">
       {/* <div className="flex items-center justify-center h-screen bg-base-200">
         <button className="btn btn-primary btn-lg border border-red-100">This button should look styled!</button>
       </div> */}
       {/* 1. Top Bar - Thin, fixed height */}
-      <div className="h-8 bg-amber-800 shadow-md flex items-center px-2 border border-gray-700">
-        <h1 className="text-xl font-bold text-base-content">{monthName}</h1>
-        {/* You can add buttons/icons here later */}
-        <div className="ml-auto">
-          {/* <button className="btn btn-ghost btn-sm">Settings</button> */}
-          <a className="btn btn-ghost btn-sm"
+      <div className="h-8 shadow-md flex items-center px-2 border-b border-base-content/20">
+        <h1 className="text-xl font-bold text-header-base1-content">{monthName}</h1>
+        <div className="ml-auto flex items-center gap-2">
+          <a className="link text-header-base1-content hover:text-primary inline-block p-2 rounded hover:bg-base-200/50 cursor-pointer"
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+            title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}>
+            {theme === 'light' ? <ThemeLightIcon /> : <ThemeDarkIcon />}
+          </a>
+          <a className="link text-header-base1-content hover:text-primary inline-block p-2 rounded hover:bg-base-200/50 cursor-pointer"
             onClick={openMenu}>
             <BarsIcon></BarsIcon>
           </a>
@@ -91,10 +108,10 @@ function NewApp() {
         {/* 2. Bottom Left Section - 80% width */}
         <div className="w-full lg:w-4/5 bg-base-100 flex flex-col">
           {/* Optional: Inner header or toolbar */}
-          <div className="bg-base-200 p-2 border-b border-base-300">
+          <div className="bg-base-200 p-2 border-b border-base-300 text-base-content">
             <div className="grid grid-cols-7 flex-row">
               {weekDays.map((day) => (
-                <div className="pl-0 p-2 h-8 text-left ">{day}</div>
+                <div className="pl-0 p-2 h-8 text-left font-semibold">{day}</div>
               ))}
             </div>
           </div>
@@ -103,9 +120,11 @@ function NewApp() {
           <div className="flex-1 p-2 pt-0 overflow-y-auto">
             <div className="prose max-w-none">
 
-              <div class="grid grid-cols-7 divide-x divide-y divide-gray-700 border border-gray-700">
+              <div className="grid grid-cols-7 divide-x divide-y divide-base-content/20 text-base-content border border-base-content/20">
                 {monthDates.map((date) => (
-                  <div className={"p-2 h-32 flex justify-between" + (date && date.getDayName() === "Sunday" ? 'bg-linear-to-br from-purple-600 via-30% via-amber-700 to-blue-600' : '')}>
+                  <div 
+                    className={"p-2 h-32 flex justify-between" + (date && date.getDayName() === "Sunday" ? 'bg-linear-to-br from-purple-600 via-30% via-amber-700 to-blue-600' : '')}
+                    onClick={handleDayClick}>
                     { date && (
                       <h2 className="text-xl font-bold">{date.getDate()}</h2>)
                     }
@@ -117,10 +136,10 @@ function NewApp() {
         </div>
 
         {/* 3. Right Sidebar - 20% width */}
-        <div className="hidden lg:block w-1/5 bg-base-300 border-l border-base-200">
+        <div className="hidden lg:block w-1/5 bg-base-200 border-l border-base-200 text-base-content">
           <div className="p-4 border-b border-base-200">
-            <h3 className="font-semibold">Sidebar</h3>
-            <p className="text-sm text-base-content/70">20% width panel</p>
+            <h3 className="font-semibold text-base-content">Sidebar</h3>
+            <p className="text-sm text-header-base-content/70">20% width panel</p>
           </div>
 
           <div className="p-4 space-y-4 overflow-y-auto h-full">
