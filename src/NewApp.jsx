@@ -7,6 +7,7 @@ import JustDate from './utilities/justDate';
 import { useMemo, useState, useRef } from 'react';
 import { useTheme } from './hooks/useTheme';
 import { event } from '@tauri-apps/api';
+import useWindowWidth from './hooks/useWindowWidth';
 
 function NewApp() {
   const { theme, toggleTheme } = useTheme();
@@ -14,14 +15,17 @@ function NewApp() {
   const [weekDays, setWeekDays] = useState([]);
   const [monthStart, setMonthStart] = useState(0);
   const [monthName, setMonthName] = useState();
-
+  const width = useWindowWidth();
+  console.log(width);
   const month = new Date().getMonth();
   const localeMonth = new JustDate().getMonthName();
+
   const monthDates = useMemo(() => {
     const currentDate = new JustDate(new Date(), 'en-US');
     const monthDates = currentDate.getMonthDates();
     const monthDays = currentDate.getDayNumbersInMonth();
-    const weekDays = currentDate.getLocalizedWeekdays();
+    const dayNameFormat = width > 700 ? 'long': width > 300 ? 'short': 'narrow';
+    const weekDays = currentDate.getLocalizedWeekdays(dayNameFormat);
 
     let weekInfo = currentDate.getLocaleWeekInfo();//This gives firstDay 1 based, Monday is 1, ..
     const firstDay = weekInfo.firstDay % 7; //To convert into 0 based. Monday is 1, Sunday is 0;
@@ -38,8 +42,8 @@ function NewApp() {
     return monthDates;
   }, [month]); // Dependency array
 
-  console.log(monthDates);
-  console.log(monthDays);
+  // console.log(monthDates);
+  // console.log(monthDays);
 
   const openMenu = () => {
     console.log("Menu Open");
@@ -123,7 +127,7 @@ function NewApp() {
               <div className="grid grid-cols-7 divide-x divide-y divide-base-content/20 text-base-content border border-base-content/20">
                 {monthDates.map((date) => (
                   <div 
-                    className={"p-2 h-32 flex justify-between" + (date && date.getDayName() === "Sunday" ? 'bg-linear-to-br from-purple-600 via-30% via-amber-700 to-blue-600' : '')}
+                    className={"p-2 h-32 flex justify-between " + (date && date.getDayName() === "Sunday" ? 'text-accent' : '')}
                     onClick={handleDayClick}>
                     { date && (
                       <h2 className="text-xl font-bold">{date.getDate()}</h2>)

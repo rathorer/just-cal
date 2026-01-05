@@ -1,3 +1,5 @@
+const MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]
+
 class JustDate extends Date {
     constructor(date = new Date(), locale = 'en-US', weekdayFormat = 'long', monthFormat = 'long') {
         super(date);
@@ -5,11 +7,24 @@ class JustDate extends Date {
         this.weekdayFormat = weekdayFormat;
         this.monthFormat = monthFormat;
     }
-    getDayName() {
-        return this.toLocaleDateString(this.locale, { weekday: this.weekdayFormat });
+    static getMonthIndex(month){
+        let monthIndex = parseInt(month);
+        if(isNaN(monthIndex)){
+            month = month.toLowerCase();
+            monthIndex = MONTHS.indexOf(month);
+            if(monthIndex === -1){
+                monthIndex = MONTHS.findIndex(x=> x.startsWith(month));
+            }
+        }
+        return monthIndex;
     }
-    getMonthName() {
-        return this.toLocaleDateString(this.locale, { month: this.monthFormat });
+    getDayName(weekdayFormat = undefined) {
+        weekdayFormat = weekdayFormat || this.weekdayFormat;
+        return this.toLocaleDateString(this.locale, { weekday: weekdayFormat });
+    }
+    getMonthName(monthFormat = undefined) {
+        monthFormat = monthFormat || this.monthFormat;
+        return this.toLocaleDateString(this.locale, { month: monthFormat });
     }
     getYear() {
         return this.getFullYear();
@@ -20,8 +35,9 @@ class JustDate extends Date {
 
         return weekInfo; //{ firstDay: 1, weekend: [6, 7], minimalDays: 4 }
     }
-    getLocalizedWeekdays() {
-        const formatter = new Intl.DateTimeFormat(this.locale, { weekday: this.weekdayFormat });
+    getLocalizedWeekdays(weekdayFormat = undefined) {
+        weekdayFormat = weekdayFormat || this.weekdayFormat;
+        const formatter = new Intl.DateTimeFormat(this.locale, { weekday: weekdayFormat });
         // January 1st 2024 was a Monday. We iterate through the next 7 days.
         const firstDayOfWeek = this.getLocaleWeekInfo().firstDay;
         return [...Array(7).keys()].map(dayIndex => {

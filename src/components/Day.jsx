@@ -14,7 +14,7 @@ export default function Day() {
   async function fetchDayItems() {
     try {
       const dayItems = await invoke("fetch_day_items", { date });
-      console.log("Fetched day items:", dayItems);
+      //console.log("Fetched day items:", dayItems);
       setTasks(dayItems);
     } catch (error) {
       console.error("Failed to fetch day items:", error);
