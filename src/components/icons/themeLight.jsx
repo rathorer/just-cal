@@ -1,4 +1,4 @@
-function ThemeLightIcon({ className = "w-5 h-5" }) {
+function ThemeLightIcon({ className = "w-6 h-6" }) {
   return (
     <svg
       className={className}

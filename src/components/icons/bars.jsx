@@ -1,4 +1,4 @@
-function BarsIcon({ className = "w-6 h-6" }) {
+function BarsIcon({ className = "w-7 h-7" }) {
   return (
     <svg 
       className={`${className} text-inherit`}

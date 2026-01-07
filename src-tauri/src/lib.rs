@@ -1,4 +1,4 @@
-use chrono::{DateTime, NaiveDate, NaiveTime, Utc};
+use chrono::{DateTime, Datelike, NaiveDate, NaiveDateTime, Utc, Weekday};
 use serde::Serialize;
 use std::convert::TryFrom;
 use std::fmt;
@@ -41,20 +41,18 @@ struct DayItem {
 // }
 
 #[tauri::command]
-fn fetch_day_items(date: String) -> Vec<DayItem> {
-    // Parse the string into the desired chrono type inside the function
-    match date.parse::<DateTime<Utc>>() {
-        Ok(dt) => {
-            println!("Received DateTime: {:?}", dt);
-            // ... your logic ...
-        }
-        Err(e) => {
-            eprintln!("Failed to parse DateTime: {}", e);
-            // Handle error (e.g., return an error result)
-        }
+fn fetch_day_items(date: &str) -> Vec<DayItem> {
+    // Parse the date part from the string to get date components
+    let date_part = &date[0..10]; // Assuming format is YYYY-MM-DDTHH:MM:SSZ
+    let naive_date = NaiveDate::parse_from_str(date_part, "%Y-%m-%d").unwrap();
+    let day = naive_date.day();
+    let weekday = naive_date.weekday();
+    let mut count: usize = 5;
+    if weekday == Weekday::Sun{
+        count = 0;
+    } else{
+        count = (day % 6) as usize;
     }
-
-    let count: usize = 10;
     let mut items_vec: Vec<DayItem> = Vec::with_capacity(count);
     let tasks: [String; 5] = [
         String::from("Batch processing capabilities"),

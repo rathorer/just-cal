@@ -3,9 +3,9 @@ import { invoke } from "@tauri-apps/api/core";
 import Month from "./components/Month";
 import { useTheme } from './hooks/useTheme';
 import "./App.css";
-import ThemeLightIcon from "./components/icons/themeLight";
-import ThemeDarkIcon from "./components/icons/themeDark";
-import BarsIcon from "./components/icons/bars";
+import ThemeLightIcon from "./components/icons/ThemeLight";
+import ThemeDarkIcon from "./components/icons/ThemeDark";
+import BarsIcon from "./components/icons/Bars";
 import JustDate from "./utilities/justDate";
 import PrevIcon from "./components/icons/Prev";
 import NextIcon from "./components/icons/Next";
@@ -19,7 +19,7 @@ function App() {
   const [monthIndex, setMonthIndex] = useState(-1);
   const [year, setYear] = useState(1969);
   const [monthName, setMonthName] = useState("");
-  const [date, setDate] = useState(1);
+  const [dayDate, setDayDate] = useState();
 
   useMemo(() => {
     let currentDate;
@@ -27,12 +27,13 @@ function App() {
       currentDate = new Date();
       setMonthIndex(currentDate.getMonth());
       setYear(currentDate.getFullYear());
-      setDate(currentDate.getDate());
+      setDayDate(currentDate.getDate());
     } else {
-      currentDate = new Date(year, monthIndex, date);
+      currentDate = new Date(year, monthIndex, dayDate);
     }
     let justDate = new JustDate(currentDate, "en-US");
     setMonthName(justDate.getMonthName());
+    setDayDate(currentDate.getDate());
   }, [monthIndex, year]);
 
 
@@ -45,6 +46,9 @@ function App() {
   }
   const handlePrevMonth = () => {
     // Ensure the index doesn't go below zero
+    if(year === 1970 && monthIndex === 0){
+      return;
+    }
     if (monthIndex === 0) {
       setYear(year - 1);
       setMonthIndex(LASTMONTH_INDEX);
@@ -63,10 +67,13 @@ function App() {
     }
   };
   const handlePrevYear = () => {
-      setYear(year - 1);
+    if(year === 1970){
+      return;
+    }
+    setYear(year - 1);
   };
   const handleNextYear = () => {
-      setYear(year + 1);
+    setYear(year + 1);
   };
 
   const handleWheelScroll = (event) => {
@@ -96,29 +103,41 @@ function App() {
   return (
     <main>
       <div className="flex flex-col bg-header-base1">
-        <div className="h-8 shadow-md flex items-center px-2 border-b border-base-content/20">
-
-          <a className="link text-header-base1-content hover: text-accent"
-            onClick={handlePrevYear}
-            disabled={monthIndex === 0 && year === 1970}>
-            <JumpPrevIcon />
-          </a>
-          <a className="link text-header-base1-content hover: text-accent"
-            onClick={handlePrevMonth}
-            disabled={monthIndex === 0 && year === 1970}
-            style={{ opacity: monthIndex === 0 && year === 1970 ? 0.5 : 1 }}>
-            <PrevIcon />
-          </a>
-          <h1 className="text-xl font-bold text-header-base1-content">{monthName} {year}</h1>
-          <a className="link text-header-base1-content hover: text-accent"
-            onClick={handleNextMonth}>
-            <NextIcon />
-          </a>
-          <a className="link text-header-base1-content hover: text-accent"
-            onClick={handleNextYear}>
-            <JumpNextIcon />
-          </a>
-          <div className="ml-auto flex items-center gap-2">
+        <div className="h-12 shadow-md flex flex-row items-center px-2 border-b border-base-content/20">
+          <div className="flex justify-start basis-4/5">
+          <div className="flex justify-start basis-1/5 gap-6">
+            <a className="link text-header-base1-content inline-block p-2 rounded hover:text-accent hover:bg-base-200/50"
+              onClick={handlePrevYear}
+              disabled={monthIndex === 0 && year === 1970}
+              style={{ opacity: monthIndex === 0 && year === 1970 ? 0.5 : 1 }}
+              title="Previous year">
+              <JumpPrevIcon title="Previous year" />
+            </a>
+            <a className="link text-header-base1-content inline-block p-2 rounded hover:text-accent hover:bg-base-200/50"
+              onClick={handlePrevMonth}
+              disabled={monthIndex === 0 && year === 1970}
+              style={{ opacity: monthIndex === 0 && year === 1970 ? 0.5 : 1 }}
+              title="Previous month">
+              <PrevIcon title="Previous month" />
+            </a>
+            </div>
+            <div className="flex justify-center basis-3/5">
+              <h1 className="text-xl font-bold p-2 inline-block text-header-base1-content">{monthName} {year}</h1>
+            </div>
+            <div className="flex justify-end basis-1/5 gap-6">
+            <a className="link text-header-base1-content inline-block p-2 rounded hover:text-accent hover:bg-base-200/50"
+              onClick={handleNextMonth}
+              title="Next month">
+              <NextIcon title="Next month" />
+            </a>
+            <a className="link text-header-base1-content inline-block p-2 rounded hover:text-accent hover:bg-base-200/50"
+              onClick={handleNextYear}
+              title="Next year">
+              <JumpNextIcon title="Next year" />
+            </a>
+            </div>
+          </div>
+          <div className="basis-1/5 flex justify-end gap-2">
             <a className="link text-header-base1-content hover:text-primary inline-block p-2 rounded hover:bg-base-200/50 cursor-pointer"
               onClick={toggleTheme}
               aria-label="Toggle theme"
@@ -133,7 +152,7 @@ function App() {
         </div>
       </div>
       <div className="flex flex-1 overflow-hidden">
-        <Month month={monthIndex} year={year} />
+        <Month date={dayDate} month={monthIndex} year={year} />
       </div>
 
     </main>
