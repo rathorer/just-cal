@@ -32,6 +32,7 @@ export default function Day(props) {
     async function fetchDayItems() {
       try {
         if (date) {
+          console.log('in day: ', date);
           const dayItems = await invoke("fetch_day_items", { date });
           //console.log("Fetched day items:", dayItems);
           setTasks(dayItems);
@@ -48,8 +49,8 @@ export default function Day(props) {
     console.log(event);
     let h2 = event && event.target;//.children
     console.log(h2.tagName);
-    if (h2 && h2.tagName === 'H2') {
-      alert(date + ' ' + h2.innerText);
+    if (h2 && h2.tagName === 'H2' || h2.tagName === "DIV") {
+      props.handleSelectedDate(date.getDate());
     }
   };
 
@@ -204,6 +205,7 @@ export default function Day(props) {
     if (ul && ul.children.length === 0) {
       addFirstLiAndFocus(ul);
     }
+    handleDayClick(e);
   };
 
   const handleBlur = (e) => {
@@ -224,11 +226,14 @@ export default function Day(props) {
 
   return (
     <div key={index}
-      className={"p-0 h-42 flex flex-col " + (date && date.getDate() === selectedDate ? " " : "")}
+      className={"p-0 h-42 flex flex-col " 
+        + (date && date.getDate() === selectedDate ? "border-2 border-info/80" : "") 
+        + (index >= 28 ? "border-r border-base-content/20": "")}//this is to avoid right border
+        //  missing in last div, 28 index tells the last line has items.
     >
       {date && (<>
         <a className={"link inline-block p-0 bg-base-200 rounded hover:text-accent hover:bg-base-300 " + (date && date.getDayName() === "Sunday" ? 'link-secondary' : '')}>
-          <h2 className={"text-2xl pt-1 pr-2 font-bold flex justify-end " + (date && date.getDate() === selectedDate ? "text-info-content bg-info" : "")}
+          <h2 className={"text-xl pt-1 pr-2 font-bold flex justify-end " + (date && date.getDate() === selectedDate ? "text-info-content/90 bg-info/80 hover:text-info-content hover:bg-info " : "")}
             onClick={handleDayClick}>{date.getDate()}</h2></a>
         {/* <div className="card bg-base-100">*/}
         <div id={"editable-div-" + index} key={index} className="overflow-y-auto min-h-10 max-h-30 no-scrollbar p-0 text-xxs focus:outline-1 custom-editor"
@@ -241,7 +246,7 @@ export default function Day(props) {
           onFocus={handleFocus}
           onBlur={handleBlur}
         >
-          <ul className="mt-2 flex flex-col p-1 gap-1 text-sm leading-none text-base-content">
+          <ul className="mt-1 flex flex-col p-1 gap-1 text-sm leading-none text-base-content">
             {tasks && tasks.length > 0 && tasks.map((task, index) => (
               <li key={index}>
                 {/* <CheckIcon className="w-4 h-4" /> */}
