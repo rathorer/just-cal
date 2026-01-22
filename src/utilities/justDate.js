@@ -56,6 +56,13 @@ class JustDate extends Date {
         }
         return dates;
     }
+    toDateString(){
+        const date = this;
+        const month = (date.getMonth()+1).toString().padStart(2, 0);
+        const year = date.getYear();
+        const dayDate = date.getDate().toString().padStart(2, 0);
+        return `${year}-${month}-${dayDate}`;
+    }
     getDayNumbersInMonth(year = this.getFullYear(), month = this.getMonth()) {
         // Setting the date to day 0 of the *next* month gets the last day of the *current* month
         const daysInMonth = new Date(year, month + 1, 0).getDate();

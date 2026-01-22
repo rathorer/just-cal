@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { parseReminder } from "../utilities/utils";
+import { CONSTANTS } from "../utilities/constants";
 import CheckIcon from "./icons/check";
 
 //import { DayPicker } from "react-day-picker";
@@ -9,13 +11,19 @@ export default function Day(props) {
   let date = props.date;
   let index = props.index;
   let selectedDate = props.selectedDate;
-
+  let existingItems = props.items || [];
+  //console.log(existingItems);
   // const [date, setDate] = useState(currentDate);
-  const [tasks, setTasks] = useState([]);
-  const tasksRef = useRef([]);
+  const [tasks, setTasks] = useState(props.items || []);
+  const tasksRef = useRef(existingItems);
   const [isDirty, setIsDirty] = useState(false)
   const editorRef = useRef(null);
   const [debounced, setDebounced] = useState('')
+
+  // useEffect(() => {
+  //   setTasks(existingItems);
+  //   tasksRef.current = existingItems;
+  // }, []);
 
   // useEffect(() => {
   //   // Set a timeout to update the debounced value after 500ms
@@ -28,22 +36,51 @@ export default function Day(props) {
   //   return () => clearTimeout(delayInputTimeoutId);
   // }, [])
 
+  function prepareItems(items) {
+    let selectedDate = date;
+    let selectedDateISOString = selectedDate.toISOString().substring(0, 10);
+    let now = new Date();
+    let nowDateTime = now.toISOString();
+    return items.map((item, i) => {
+      let reminder = parseReminder(item);
+      let reminderDateTime = "";
+      if (!reminder.isReminder) {
+        reminderDateTime = selectedDateISOString + CONSTANTS.DEFAULT_REMIND_TIME;
+      } else {
+        reminderDateTime = selectedDateISOString + reminder.time;
+      }
+
+      return {
+        id: i + 1,
+        user_input: item,
+        title: item,
+        description: "",
+        status: "Pending",
+        time: nowDateTime,
+        reminder: reminderDateTime
+      }
+    });
+  }
+
   useEffect(() => {
-    async function fetchDayItems() {
+    async function fetchDayItems(date) {
       try {
         if (date) {
-          console.log('in day: ', date);
-          const dayItems = await invoke("fetch_day_items", { date });
-          //console.log("Fetched day items:", dayItems);
-          setTasks(dayItems);
-          tasksRef.current = dayItems;
+          //const utcDateString = date.toISOString();
+          //console.log('in day: ', date);
+          //const dayItems = await invoke("get_items_for_date", { date });
+          //console.log("Fetched date items:", dayItems);
+          //setTasks(dayItems);
+          //tasksRef.current = dayItems;
         }
       } catch (error) {
         console.error("Failed to fetch day items:", error);
       }
     }
-    fetchDayItems();
-  }, []);
+    if(selectedDate && date){
+      fetchDayItems(date);
+    }
+  }, [selectedDate]);
 
   const handleDayClick = (event, t) => {
     console.log(event);
@@ -68,23 +105,26 @@ export default function Day(props) {
     };
   }
 
-  const handleSave = (ul) => {
+  const handleSave = async (ul) => {
     if (ul) {
       const items = Array.from(ul.querySelectorAll('li'))
         .flatMap(li => {
           let text = li.innerText;
           text = text && text.trim();
-          if(text && text.length > 0){
+          if (text && text.length > 0) {
             return [text];
           }
           return [];
         });
+        console.log('items before saving:', items);
       if (dayItemsChanged(items)) {
         setIsDirty(true);
         tasksRef.current = items;//update new item
-        //todo:Save
-        let d = new Date();
-        console.log('Saving data...', items, d.getMinutes() + ":" + d.getSeconds());
+        //todo:Lets save to localStorage first and fire a request to save at backend
+        const backendItems = prepareItems(items);
+        console.log('save_items_for_date', date);
+        const resp = await invoke("save_items_for_date", { date: date.toISOString(), items: backendItems });
+        console.log(resp);
       }
     }
   };
@@ -98,7 +138,7 @@ export default function Day(props) {
         for (let i = 0; i < items.length; i++) {
           const currEl = items[i];
           const oldEl = oldItems[i];
-          if(!currEl && !oldItems){
+          if (!currEl && !oldItems) {
             continue;
           }
           if (currEl !== oldEl) {
@@ -226,17 +266,17 @@ export default function Day(props) {
 
   return (
     <div key={index}
-      className={"p-0 h-42 flex flex-col " 
-        + (date && date.getDate() === selectedDate ? "border-2 border-info/80" : "") 
-        + (index >= 28 ? "border-r border-base-content/20": "")}//this is to avoid right border
-        //  missing in last div, 28 index tells the last line has items.
+      className={"p-0 h-42 flex flex-col "
+        + (date && date.getDate() === selectedDate ? "border-2 border-info/80" : "")
+        + (index >= 28 ? "border-r border-base-content/20" : "")}//this is to avoid right border
+    //  missing in last div, 28 index tells the last line has items.
     >
       {date && (<>
-        <a className={"link inline-block p-0 bg-base-200 rounded hover:text-accent hover:bg-base-300 " + (date && date.getDayName() === "Sunday" ? 'link-secondary' : '')}>
+        <a className={"link inline-block p-0 bg-base-200/90 rounded hover:text-accent hover:bg-base-300 " + (date && date.getDayName() === "Sunday" ? 'text-error/80' : '')}>
           <h2 className={"text-xl pt-1 pr-2 font-bold flex justify-end " + (date && date.getDate() === selectedDate ? "text-info-content/90 bg-info/80 hover:text-info-content hover:bg-info " : "")}
             onClick={handleDayClick}>{date.getDate()}</h2></a>
         {/* <div className="card bg-base-100">*/}
-        <div id={"editable-div-" + index} key={index} className="overflow-y-auto min-h-10 max-h-30 no-scrollbar p-0 text-xxs focus:outline-1 custom-editor"
+        <div id={"editable-div-" + index} key={index} className="overflow-y-auto min-h-auto max-h-full no-scrollbar p-0 text-xxs focus:outline-1 custom-editor"
           ref={editorRef}
           contentEditable={true}
           suppressContentEditableWarning={true}
@@ -247,10 +287,10 @@ export default function Day(props) {
           onBlur={handleBlur}
         >
           <ul className="mt-1 flex flex-col p-1 gap-1 text-sm leading-none text-base-content">
-            {tasks && tasks.length > 0 && tasks.map((task, index) => (
+            {existingItems && existingItems.length > 0 && existingItems.map((task, index) => (
               <li key={index}>
                 {/* <CheckIcon className="w-4 h-4" /> */}
-                {task.item}
+                {task}
               </li>
             ))}
           </ul>

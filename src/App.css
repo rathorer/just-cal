@@ -6,6 +6,7 @@
   color: #F6C2CF;
   color: #60a5fa;
   color: #3b82f6;
+  color: #61dafb;
   color: #8AC7AD;
   color: #F9D3D2;
   color: #FFD700;
@@ -14,7 +15,11 @@
   color: #50C878;
   color: #FFD700;
   color: #333333;
+  color: #f9d7a7;
   color: #FFA500;
+  color: #ff7200;
+  color: #ff5d00;
+  color: #c76706;
   color: #FFFFFF;
 }
 
@@ -28,7 +33,7 @@
 :root {
   font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
   font-size: 12px;
-  line-height: 24px;
+  /* line-height: 24px; */
   font-weight: 400;
 
   color: #0f0f0f;
@@ -81,6 +86,7 @@ h1 {
 }
 
 input,
+textarea,
 button {
   /* border-radius: 2px;
   border: 1px solid transparent;

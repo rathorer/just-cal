@@ -1,6 +1,7 @@
 import Day from './Day';
 import JustDate from './../utilities/justDate';
-import { useMemo, useState, useRef } from 'react';
+import { invoke } from "@tauri-apps/api/core";
+import { useMemo, useState, useRef, useEffect } from 'react';
 import { useTheme } from './../hooks/useTheme';
 import { event } from '@tauri-apps/api';
 import useWindowWidth from './../hooks/useWindowWidth';
@@ -13,17 +14,19 @@ function Month(props) {
   const [monthStart, setMonthStart] = useState(0);
   const [monthName, setMonthName] = useState();
   const [selectedDate, setSelectedDate] = useState(props.date);
+  const [monthItems, setMonthItems] = useState([]);
   const width = useWindowWidth();
 
   const month = JustDate.getMonthIndex(props.month);
   const year = props.year;
   //setSelectedDate(props.date);
 
-  const handleSelectedDate = (date)=> {
-      console.log(date);
-    if(Number.isInteger(date)){
+
+  const handleSelectedDate = (date) => {
+    console.log(date);
+    if (Number.isInteger(date)) {
       setSelectedDate(date);
-    } else{
+    } else {
       console.error('Not a valid date selected.');
     }
   };
@@ -58,24 +61,62 @@ function Month(props) {
   }, [month, year, width]); // Dependency array
 
 
+  useEffect(() => {
+    async function fetchMonthItems(date) {
+      let utcDateStr = date.toISOString();
+      let items = await invoke("get_items_for_month", { date: utcDateStr });
+      if (items && items.length) {
+        let itemsAsObj = Object.fromEntries(items);
+        console.log('get_items_for_month', itemsAsObj);
+        setMonthItems(itemsAsObj);
+      } else {
+        setMonthItems({});
+      }
+    }
+    let date = new Date(year, month, selectedDate);
+    fetchMonthItems(date);
+  }, [year, month]);
+
+  const isSunday = function (day, index) {
+    let isSun = (day.toLowerCase() === "sunday" 
+      || day.toLowerCase() === "sun" 
+      || (day.toLowerCase === "s" && index === weekDays.indexOf('s')));
+    console.log(isSun);
+    return isSun;
+
+  }
+
   return (
     <div className="h-[calc(100vh-3rem)] flex flex-1 overflow-hidden">
       {/* 2. Bottom Left Section - 80% width */}
       <div className="w-full lg:w-4/5 bg-base-100 flex flex-col">
         {/* Optional: Inner header or toolbar */}
         <div className="pl-3 bg-base-100/90 p-2 border-b border-base-100 text-base-content">
-          <div className="grid grid-cols-7 flex-row ">
-            {weekDays.map((day) => (
-              <div key={monthName + day} className="pl-0 p-2 h-8 text-xl text-left font-semibold">{day}</div>
+          <div className="grid grid-cols-7 flex-row">
+            {weekDays.map((day, idx) => (
+              <div key={monthName + day} className={"pl-0 p-2 h-8 text-xl text-center font-semibold"}>{day}</div>
             ))}
           </div>
         </div>
         <div className="flex-1 p-2 pt-0 overflow-y-auto">
           <div className="prose max-w-none">
-            <div className="grid grid-cols-7 divide-x divide-y divide-base-content/20 text-base-content border border-base-content/20">
-              {monthDates.map((date, idx) => (
-                <Day key={idx} date={date} index={idx} selectedDate={selectedDate} handleSelectedDate={handleSelectedDate} />
-              ))}
+            <div className="grid grid-cols-7 divide-x divide-y divide-base-content/30 text-base-content/90 border border-base-content/30">
+              {console.log(monthDates)}
+              {monthDates.map((date, idx) => {
+                if (date) {
+                  let dateKey = new JustDate(date).toDateString();
+                  console.log(idx, dateKey);
+                  let items = monthItems[dateKey];
+                  return <Day key={dateKey}
+                    date={date}
+                    index={idx}
+                    selectedDate={selectedDate}
+                    handleSelectedDate={handleSelectedDate}
+                    items={items} />
+                } else {
+                  return <div key={idx} className="p-0 h-42 flex flex-col"></div>
+                }
+              })}
             </div>
           </div>
         </div>

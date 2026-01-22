@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import Month from "./components/Month";
 import { useTheme } from './hooks/useTheme';
@@ -11,15 +11,29 @@ import PrevIcon from "./components/icons/Prev";
 import NextIcon from "./components/icons/Next";
 import JumpNextIcon from "./components/icons/JumpNext";
 import JumpPrevIcon from "./components/icons/JumpPrev";
+import { arch, hostname, locale } from '@tauri-apps/plugin-os';
 
 function App() {
   const LASTMONTH_INDEX = 11; // December;
   const { theme, toggleTheme } = useTheme();
-  const [greetMsg, setGreetMsg] = useState("");
   const [monthIndex, setMonthIndex] = useState(-1);
   const [year, setYear] = useState(1969);
   const [monthName, setMonthName] = useState("");
   const [dayDate, setDayDate] = useState();
+
+  useEffect(() => {
+    async function getLocale() {
+      const userLocale = await locale();
+      if (userLocale) {
+        console.log("User's locale:", userLocale);
+        // Use the locale string for your internationalization (i18n) logic
+      } else {
+        console.log("Could not detect locale.");
+      }
+    }
+    getLocale();
+  }, []);
+
 
   useMemo(() => {
     let currentDate;
@@ -36,17 +50,12 @@ function App() {
     setDayDate(currentDate.getDate());
   }, [monthIndex, year]);
 
-
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { monthIndex }));
-  }
   const openMenu = () => {
     console.log("Menu Open");
   }
   const handlePrevMonth = () => {
     // Ensure the index doesn't go below zero
-    if(year === 1970 && monthIndex === 0){
+    if (year === 1970 && monthIndex === 0) {
       return;
     }
     if (monthIndex === 0) {
@@ -67,7 +76,7 @@ function App() {
     }
   };
   const handlePrevYear = () => {
-    if(year === 1970){
+    if (year === 1970) {
       return;
     }
     setYear(year - 1);
@@ -105,36 +114,36 @@ function App() {
       <div className="flex flex-col bg-header-base1">
         <div className="h-12 shadow-md flex flex-row items-center px-2 border-b border-base-content/20">
           <div className="flex justify-start basis-4/5">
-          <div className="flex justify-start basis-1/5 gap-6">
-            <a className="link text-header-base1-content inline-block p-2 rounded hover:text-accent hover:bg-base-200/50"
-              onClick={handlePrevYear}
-              disabled={monthIndex === 0 && year === 1970}
-              style={{ opacity: monthIndex === 0 && year === 1970 ? 0.5 : 1 }}
-              title="Previous year">
-              <JumpPrevIcon title="Previous year" />
-            </a>
-            <a className="link text-header-base1-content inline-block p-2 rounded hover:text-accent hover:bg-base-200/50"
-              onClick={handlePrevMonth}
-              disabled={monthIndex === 0 && year === 1970}
-              style={{ opacity: monthIndex === 0 && year === 1970 ? 0.5 : 1 }}
-              title="Previous month">
-              <PrevIcon title="Previous month" />
-            </a>
+            <div className="flex justify-start basis-1/5 gap-6">
+              <a className="link text-header-base1-content inline-block p-2 rounded hover:text-accent hover:bg-base-200/50"
+                onClick={handlePrevYear}
+                disabled={monthIndex === 0 && year === 1970}
+                style={{ opacity: monthIndex === 0 && year === 1970 ? 0.5 : 1 }}
+                title="Previous year">
+                <JumpPrevIcon title="Previous year" />
+              </a>
+              <a className="link text-header-base1-content inline-block p-2 rounded hover:text-accent hover:bg-base-200/50"
+                onClick={handlePrevMonth}
+                disabled={monthIndex === 0 && year === 1970}
+                style={{ opacity: monthIndex === 0 && year === 1970 ? 0.5 : 1 }}
+                title="Previous month">
+                <PrevIcon title="Previous month" />
+              </a>
             </div>
             <div className="flex justify-center basis-3/5">
               <h1 className="text-xl font-bold p-2 inline-block text-header-base1-content">{monthName} {year}</h1>
             </div>
             <div className="flex justify-end basis-1/5 gap-6">
-            <a className="link text-header-base1-content inline-block p-2 rounded hover:text-accent hover:bg-base-200/50"
-              onClick={handleNextMonth}
-              title="Next month">
-              <NextIcon title="Next month" />
-            </a>
-            <a className="link text-header-base1-content inline-block p-2 rounded hover:text-accent hover:bg-base-200/50"
-              onClick={handleNextYear}
-              title="Next year">
-              <JumpNextIcon title="Next year" />
-            </a>
+              <a className="link text-header-base1-content inline-block p-2 rounded hover:text-accent hover:bg-base-200/50"
+                onClick={handleNextMonth}
+                title="Next month">
+                <NextIcon title="Next month" />
+              </a>
+              <a className="link text-header-base1-content inline-block p-2 rounded hover:text-accent hover:bg-base-200/50"
+                onClick={handleNextYear}
+                title="Next year">
+                <JumpNextIcon title="Next year" />
+              </a>
             </div>
           </div>
           <div className="basis-1/5 flex justify-end gap-2">

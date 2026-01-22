@@ -1,9 +1,9 @@
 use tauri::{AppHandle, EventLoopMessage, Runtime, State, Manager, Wry};
-use chrono::{DateTime, Datelike, NaiveDate, NaiveDateTime, Utc, Weekday};
+use chrono::{DateTime, Datelike, NaiveDate, NaiveDateTime, Utc, Weekday, Local};
 use tauri_plugin_store::{Store, StoreBuilder, StoreExt};
 use std::sync::Mutex;
 use serde::{Serialize, Deserialize};
-use crate::{models::{Day, Item}, store::StoreManager};
+use crate::{models::{Day, Item}, store::{self, StoreManager}};
 
 const STORE_FILE: &str = "db_justcal.json";
 const USERS_KEY: &str = "users";
@@ -42,10 +42,7 @@ fn convert_date_to_key(date: String) -> String {
 }
 fn convert_date_to_month_key(date: String) -> String {
     // Date format is YYYY-MM-DDTHH:MM:SSZ when passed from frontend
-    let year = &date[0..4];
-    let month = &date[5..7];
-    //YYYY-MM
-    format!("{}-{}", year, month)
+    store::date_to_month_key(&date)
 }
 
 // #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -55,16 +52,17 @@ fn convert_date_to_month_key(date: String) -> String {
 
 // Get for one date
 #[tauri::command]
-pub async fn get_items_for_date(app: AppHandle<Wry>, date: String) -> Result<Vec<Item>, String> {
-    //get the store for the month from App state
-    // let store = get_store(&app).await?;
-    // let key = format!("{}{}", KEY_PREFIX, date);
+pub async fn get_items_for_date(app: AppHandle<Wry>, date:DateTime<Utc>) -> Result<Vec<Item>, String> {
+    let locale_datetime:DateTime<Local> = DateTime::from(date);
+    let locale_date_str = locale_datetime.to_string();
+
     let store_manager = app.state::<StoreManager<Wry>>();
-    let date_key = convert_date_to_key(date.clone());
-    let month_key = convert_date_to_month_key(date.clone());
+    let date_key = convert_date_to_key(locale_date_str.clone());
+    let month_key = convert_date_to_month_key(locale_date_str.clone());
 
     let stores = store_manager.stores.read().unwrap();
-
+    let all_stores = format!("{:?}", stores.clone().into_keys());
+    println!("get date wise: stores in state {}", all_stores);
     let store = stores
     .get(&month_key)
     .ok_or(format!("Store not found for month: {}", &month_key))?;
@@ -85,15 +83,17 @@ pub async fn get_items_for_date(app: AppHandle<Wry>, date: String) -> Result<Vec
 }
 
 #[tauri::command]
-pub async fn get_items_for_month(manager: State<'_, StoreManager<Wry>>, date: String) -> Result<Vec<String>, String> {
-    //let key = convert_date_to_key(date);
-    let store_key = convert_date_to_month_key(date);
-    //let manager = app.state::<store::StoreManager<R>>();
-    let stores = manager.stores.read().unwrap();
+pub async fn get_items_for_month(manager: State<'_, StoreManager<Wry>>, date: DateTime<Utc>) -> Result<Vec<(String, Vec<String>)>, String> {
+    let locale_datetime:DateTime<Local> = DateTime::from(date);
+    let locale_date_str = locale_datetime.to_string();
 
+    let store_key = convert_date_to_month_key(locale_date_str);
+    let stores = manager.stores.read().unwrap();
+    println!("getting item for month {}", store_key);
     let store = stores
         .get(&store_key)
         .ok_or("Store not found")?;
+    
     //get all items for the month, no filtering required here, all items stored in current store are for month
     // let items = store
     //     .get(&key)
@@ -101,48 +101,61 @@ pub async fn get_items_for_month(manager: State<'_, StoreManager<Wry>>, date: St
     //     .into_iter()  
     //     .map(|f: Item| f.user_input.clone())
     //     .collect();
-    let month_items: Vec<String> = store
-        .keys()
+    println!("Items in store: {:?}", store.entries());
+    // Each value in store is Vec<Item>, so deserialize as Vec<Item> and flatten
+    let month_items: Vec<(String, Vec<String>)> = store
+        .entries()
         .into_iter()
-        .filter_map(|k| store.get(&k))
-        .filter_map(|v: serde_json::Value| serde_json::from_value(v.clone()).ok())
-        //.and_then(|v| serde_json::from_value(v.clone()).ok())
-        //.into_iter()
-        .map(|f: Item| f.user_input.clone())
-        //.map(|k| k.strip_prefix(KEY_PREFIX).unwrap().to_string())
+        .filter_map(|(k, v)| {
+            match serde_json::from_value::<Vec<Item>>(v.clone()) {
+                Ok(items) => {
+                    let inputs = items.into_iter().map(|item| item.user_input).collect();
+                    Some((k, inputs))
+                }
+                Err(e) => {
+                    println!("Deserialization failed for key {}: {:?}, value: {:?}", k, e, v);
+                    None
+                }
+            }
+        })
         .collect();
 
+    println!("filtered items: {:?}", month_items);
     Ok(month_items)
 }
 
 // Save/Update one date
 #[tauri::command]
-pub async fn save_items_for_date(manager: State<'_, StoreManager<Wry>>, date: String, items: Vec<Item>) -> Result<(), String> {
-    let key = convert_date_to_key(date.clone());
-    let store_key = convert_date_to_month_key(date.clone());
-
+pub async fn save_items_for_date(manager: State<'_, StoreManager<Wry>>, date: DateTime<Utc>, items: Vec<Item>) -> Result<(), String> {
+    let locale_datetime:DateTime<Local> = DateTime::from(date);
+    let locale_date_str = locale_datetime.to_string();
+    let key = convert_date_to_key(locale_date_str.clone());
+    let store_key = convert_date_to_month_key(locale_date_str.clone());
+    println!("in backend save items for date {}", store_key);
     let stores = manager.stores.write().unwrap();
+    let all_stores = format!("{:?}", stores.clone().into_keys());
+    println!("save: stores in state {}", all_stores);
     let store = stores
         .get(&store_key)
         .ok_or("Store not found")?;
     store.set(key, serde_json::to_value(&items).map_err(|e| e.to_string())?);
     store.save().map_err(|e| e.to_string())?;
-    store.reload().map_err(|e| e.to_string())?;
-    
     Ok(())
 }
 
 // Optional: Delete one date
 #[tauri::command]
-pub async fn delete_items_for_date(manager: State<'_, StoreManager<Wry>>, date: String) -> Result<(), String> {
-    let key = convert_date_to_key(date.clone());
-    let store_key = convert_date_to_month_key(date.clone());
+pub async fn delete_items_for_date(manager: State<'_, StoreManager<Wry>>, date: DateTime<Utc>) -> Result<(), String> {
+    let locale_datetime:DateTime<Local> = DateTime::from(date);
+    let locale_date_str = locale_datetime.to_string();
+    let key = convert_date_to_key(locale_date_str.clone());
+    let store_key = convert_date_to_month_key(locale_date_str.clone());
     let stores = manager.stores.write().unwrap();
     let store = stores
         .get(&store_key)
         .ok_or("Store not found")?;
     store.delete(key);
-    store.save();
+    store.save().map_err(|e| e.to_string())?;
     Ok(())
 }
 

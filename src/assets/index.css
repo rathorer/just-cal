@@ -10,6 +10,8 @@
   --color-header-base-content: #326677;
   --color-header-base1: #e1e1f9;
   --color-header-base1-content: #444557;
+  /* --color-primary: #ff5d00;
+  --color-primary-content:#f9d7a7;  */
 }
 @plugin "daisyui/theme" {
   name: "dark";
@@ -29,6 +31,8 @@
   --color-header-base-content: #afecff;
   --color-header-base1: #5c5d72;
   --color-header-base1-content: #e1e1f9;
+  /* --color-primary: #ff5d00;
+  --color-primary-content:#f9d7a7;  */
   /* --color-base-500: #546063;
   --color-base-600: #5c5d72;
   --color-base-700: #e1e1f9; */
