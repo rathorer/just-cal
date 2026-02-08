@@ -23,7 +23,7 @@ function Month(props) {
 
 
   const handleSelectedDate = (date) => {
-    console.log(date);
+    // console.log(date);
     if (Number.isInteger(date)) {
       setSelectedDate(date);
     } else {
@@ -67,7 +67,7 @@ function Month(props) {
       let items = await invoke("get_items_for_month", { date: utcDateStr });
       if (items && items.length) {
         let itemsAsObj = Object.fromEntries(items);
-        console.log('get_items_for_month', itemsAsObj);
+        //console.log('get_items_for_month', itemsAsObj);
         setMonthItems(itemsAsObj);
       } else {
         setMonthItems({});
@@ -81,7 +81,7 @@ function Month(props) {
     let isSun = (day.toLowerCase() === "sunday" 
       || day.toLowerCase() === "sun" 
       || (day.toLowerCase === "s" && index === weekDays.indexOf('s')));
-    console.log(isSun);
+    //console.log(isSun);
     return isSun;
 
   }
@@ -101,11 +101,9 @@ function Month(props) {
         <div className="flex-1 p-2 pt-0 overflow-y-auto">
           <div className="prose max-w-none">
             <div className="grid grid-cols-7 divide-x divide-y divide-base-content/30 text-base-content/90 border border-base-content/30">
-              {console.log(monthDates)}
               {monthDates.map((date, idx) => {
                 if (date) {
                   let dateKey = new JustDate(date).toDateString();
-                  console.log(idx, dateKey);
                   let items = monthItems[dateKey];
                   return <Day key={dateKey}
                     date={date}
@@ -121,7 +119,11 @@ function Month(props) {
           </div>
         </div>
       </div>
-      <RightSection month={month} monthName={monthName} year={year} selectedDate={selectedDate} />
+      <RightSection
+        year={year} 
+        month={month} 
+        monthName={monthName} 
+        selectedDate={selectedDate} />
     </div >
   )
 }

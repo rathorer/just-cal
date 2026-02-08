@@ -1,14 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { parseReminder } from "../utilities/utils";
-import { CONSTANTS } from "../utilities/constants";
+import { Constants } from "../utilities/constants";
 import CheckIcon from "./icons/check";
+import { getReminder } from "../utilities/reminderUtils";
 
 //import { DayPicker } from "react-day-picker";
 
 export default function Day(props) {
   const [greetMsg, setGreetMsg] = useState("");
-  let date = props.date;
+  let date = props.date;//JustDate object
+  //TODO: Start here, date is coming invalid.
+  //console.log(date);
   let index = props.index;
   let selectedDate = props.selectedDate;
   let existingItems = props.items || [];
@@ -17,13 +19,14 @@ export default function Day(props) {
   const [tasks, setTasks] = useState(props.items || []);
   const tasksRef = useRef(existingItems);
   const [isDirty, setIsDirty] = useState(false)
+  const [currentDate, setCurrentDate] = useState(date);
   const editorRef = useRef(null);
-  const [debounced, setDebounced] = useState('')
+  const saveTimerRef = useRef(null);
 
-  // useEffect(() => {
-  //   setTasks(existingItems);
-  //   tasksRef.current = existingItems;
-  // }, []);
+  useEffect(() => {
+    console.log(date);
+    setCurrentDate(date);
+  }, [date]);
 
   // useEffect(() => {
   //   // Set a timeout to update the debounced value after 500ms
@@ -37,27 +40,27 @@ export default function Day(props) {
   // }, [])
 
   function prepareItems(items) {
-    let selectedDate = date;
-    let selectedDateISOString = selectedDate.toISOString().substring(0, 10);
-    let now = new Date();
-    let nowDateTime = now.toISOString();
+    //let selectedDateObj = new JustDate(currentDate);
     return items.map((item, i) => {
-      let reminder = parseReminder(item);
-      let reminderDateTime = "";
-      if (!reminder.isReminder) {
-        reminderDateTime = selectedDateISOString + CONSTANTS.DEFAULT_REMIND_TIME;
-      } else {
-        reminderDateTime = selectedDateISOString + reminder.time;
+      let extractedTimes = getReminder(item);
+      let reminderTime = extractedTimes.reminder;
+      currentDate.setHours(reminderTime.hour);
+      currentDate.setMinutes(reminderTime.minute);
+      let reminderDateTimeStr = currentDate.toISOString();
+      let eventDateTimeStr = null;
+      if (extractedTimes.event) {
+        currentDate.setHours(extractedTimes.event.hour);
+        currentDate.setMinutes(extractedTimes.event.minute);
+        eventDateTimeStr = currentDate.toISOString();
       }
-
       return {
         id: i + 1,
         user_input: item,
         title: item,
         description: "",
         status: "Pending",
-        time: nowDateTime,
-        reminder: reminderDateTime
+        time: eventDateTimeStr,
+        reminder: reminderDateTimeStr
       }
     });
   }
@@ -77,33 +80,36 @@ export default function Day(props) {
         console.error("Failed to fetch day items:", error);
       }
     }
-    if(selectedDate && date){
+    if (selectedDate && date) {
       fetchDayItems(date);
     }
   }, [selectedDate]);
 
   const handleDayClick = (event, t) => {
-    console.log(event);
+    //console.log(event);
     let h2 = event && event.target;//.children
-    console.log(h2.tagName);
+    //console.log(h2.tagName);
     if (h2 && h2.tagName === 'H2' || h2.tagName === "DIV") {
       props.handleSelectedDate(date.getDate());
     }
   };
 
-  function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-      const context = this;
-      // Clear the previous timeout if the function is called again
-      clearTimeout(timeout);
-      // Set a new timeout
-      timeout = setTimeout(() => {
-        // Execute the original function after the wait period
-        func.apply(context, args);
-      }, wait);
-    };
+  function scheduleSave(ul) {
+    try {
+      clearTimeout(saveTimerRef.current);
+    } catch (e) { }
+    saveTimerRef.current = setTimeout(() => {
+      handleSave(ul);
+    }, Constants.DEBOUNCE_DURATION);
   }
+
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleSave = async (ul) => {
     if (ul) {
@@ -116,19 +122,24 @@ export default function Day(props) {
           }
           return [];
         });
-        console.log('items before saving:', items);
+      console.log('items before saving:', items);
       if (dayItemsChanged(items)) {
         setIsDirty(true);
         tasksRef.current = items;//update new item
         //todo:Lets save to localStorage first and fire a request to save at backend
         const backendItems = prepareItems(items);
-        console.log('save_items_for_date', date);
-        const resp = await invoke("save_items_for_date", { date: date.toISOString(), items: backendItems });
-        console.log(resp);
+        //console.log('save_items_for_date', date);
+        try {
+          console.log('save_items_for_date', backendItems);
+          const resp = await invoke("save_items_for_date", { date: date.toISOString(), items: backendItems });
+
+        } catch (error) {
+          console.error('Error while saving..', error);
+        }
+        //console.log(resp);
       }
     }
   };
-  const delayedSave = debounce(handleSave, 1500);
 
   const dayItemsChanged = (items) => {
     let oldItems = tasksRef.current;
@@ -183,6 +194,9 @@ export default function Day(props) {
   };
 
   const handleInput = (e) => {
+    console.log('on input');
+    const ul = e.currentTarget.querySelector('ul') || (editorRef.current && editorRef.current.firstChild);
+    if (ul) scheduleSave(ul);
   };
 
   const handleKeyDown = (e) => {
@@ -205,7 +219,7 @@ export default function Day(props) {
         if (isLast) {
           e.preventDefault();
         }
-        delayedSave(ul);
+        scheduleSave(ul);
       }
     }
   };
@@ -233,6 +247,8 @@ export default function Day(props) {
     // Get text without formatting to prevent XSS and layout breakage
     const text = e.clipboardData.getData('text/plain');
     insertTextAtCursor(text);
+    const ul = editorRef.current && editorRef.current.firstChild;
+    if (ul) scheduleSave(ul);
   };
 
   const handleFocus = (e) => {
@@ -248,6 +264,7 @@ export default function Day(props) {
     handleDayClick(e);
   };
 
+  //TODO: needs to be fixed to take the ul of prev not the current.
   const handleBlur = (e) => {
     //remove li if it is last one
     //const ul = e.currentTarget.querySelector('ul');
@@ -266,21 +283,25 @@ export default function Day(props) {
 
   return (
     <div key={index}
-      className={"p-0 h-42 flex flex-col "
+      className={"p-0 h-42 flex flex-col hover:cursor-text"
         + (date && date.getDate() === selectedDate ? "border-2 border-info/80" : "")
         + (index >= 28 ? "border-r border-base-content/20" : "")}//this is to avoid right border
     //  missing in last div, 28 index tells the last line has items.
     >
       {date && (<>
-        <a className={"link inline-block p-0 bg-base-200/90 rounded hover:text-accent hover:bg-base-300 " + (date && date.getDayName() === "Sunday" ? 'text-error/80' : '')}>
-          <h2 className={"text-xl pt-1 pr-2 font-bold flex justify-end " + (date && date.getDate() === selectedDate ? "text-info-content/90 bg-info/80 hover:text-info-content hover:bg-info " : "")}
+        <a className={"link inline-block p-0 bg-base-200/90 rounded hover:text-accent hover:bg-base-300 " +
+          (date && date.getDayName() === "Sunday" ? 'text-error/80' : '')}>
+          <h2 className={"text-xl pt-1 pr-2 font-bold flex justify-end " +
+            (date && date.getDate() === selectedDate ?
+              "text-info-content/90 bg-info/80 hover:text-info-content hover:bg-info " : "")}
             onClick={handleDayClick}>{date.getDate()}</h2></a>
         {/* <div className="card bg-base-100">*/}
-        <div id={"editable-div-" + index} key={index} className="overflow-y-auto min-h-auto max-h-full no-scrollbar p-0 text-xxs focus:outline-1 custom-editor"
+        <div id={"editable-div-" + index} key={index}
+          className="overflow-y-auto min-h-auto max-h-full no-scrollbar p-0 text-xxs focus:outline-1 custom-editor"
           ref={editorRef}
           contentEditable={true}
           suppressContentEditableWarning={true}
-          // onInput={handleInput}
+          onInput={handleInput}
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
           onFocus={handleFocus}

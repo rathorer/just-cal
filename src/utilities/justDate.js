@@ -1,3 +1,5 @@
+import { ExtractedTime } from "./entities";
+
 const MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]
 
 class JustDate extends Date {
@@ -67,6 +69,15 @@ class JustDate extends Date {
         // Setting the date to day 0 of the *next* month gets the last day of the *current* month
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         return Array.from({ length: daysInMonth }, (_, i) => i + 1);
+    }
+    setTime(extractedTime){
+   // let currentDate = date;
+        if(extractedTime instanceof ExtractedTime){
+            const thisDate = this;
+            thisDate.setHours(extractedTime.hour);
+            thisDate.setMinutes(extractedTime.minute);
+        }
+        return thisDate;
     }
 }
 

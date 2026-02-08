@@ -36,7 +36,7 @@ pub struct Item {
     title: String,
     description: String,
     status: ItemState,
-    time: DateTime<Utc>,
+    time: Option<DateTime<Utc>>,
     reminder: Option<DateTime<Utc>>
 }
 

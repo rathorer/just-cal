@@ -2,28 +2,49 @@ import { useState, useEffect } from 'react';
 import { invoke } from "@tauri-apps/api/core";
 import CheckIcon from './icons/check';
 import UndoIcon from './icons/Undo';
+import Editable, { ContentEditable } from './ContentEditable';
+import AgendaCard from './AgendaCard';
+import useCache from '../hooks/useCache';
+import DayAgenda from './DayAgenda';
 
 function RightSection(props) {
+  const cacheTTL = 30*1000;//30 seconds;
+  const year = props.year;
   const month = props.month;
   const monthName = props.monthName;
-  const year = props.year;
   let selectedDate = props.selectedDate;
   console.log(selectedDate);
+  const dateAsKey = `${year}-${month}-${selectedDate}`;
   let dateObj = new Date(year, month, selectedDate);
+  console.log('dateasKey:', dateAsKey);
   //const [currentDate, setCurrentDate] = useState(selectedDate);
   const [date, setDate] = useState(dateObj);
-  const [items, setItems] = useState([]);
-  const [recentRemoved, setRecentRemoved] = useState([]);
+  const [items, setItems] = useState({[dateAsKey]:[]});
+  const [recentRemoved, setRecentRemoved] = useState({dateAsKey:[]});
+  const agendaCache = useCache(cacheTTL);
+
+  useEffect(() => {
+    setDate(dateObj);
+    console.log('items in rs: ', items);
+  }, [year, month, selectedDate]);
 
   useEffect(() => {
     async function fetchDayItems() {
       try {
         if (date) {
-          let date = new Date(year, month, selectedDate);
-          console.log('calling get_items_for_date.', date);
-          const dayItems = await invoke("get_items_for_date", { date });
-          console.log("Fetched selected day items:", dayItems);
-          setItems(dayItems);
+          //let date = new Date(year, month, selectedDate);
+          //let agenda = agendaCache.get(dateAsKey);
+          //if(!agenda){
+            let jsonDate = date.toISOString();
+            console.log('calling get_items_for_date.', jsonDate);
+            const dayItems = await invoke("get_items_for_date", { date:jsonDate });
+            console.log("Fetched selected day items:", dayItems);
+            
+            setItems({...items, [dateAsKey]: dayItems});
+            //agendaCache.set(dateAsKey, dayItems);
+          // } else{
+          //   setItems(agenda);
+          // }
         }
       } catch (error) {
         console.error("Failed to fetch selected day items:", error);
@@ -32,33 +53,42 @@ function RightSection(props) {
     fetchDayItems();
   }, [date, selectedDate]);
 
-  const handleRemove = function (index, e) {
-    const target = e.currentTarget;
-    console.log(target);
-    if (target && target.attributes.name.value === 'removeItem') {
-      let currentItems = [...items];
+  const handleRemove = function (dateKey, index, e) {
+    //const target = e.currentTarget;
+    //console.log(target);
+    //if (target && target.attributes.name.value === 'removeItem') {
+      let currentItems = [...items[dateKey]];
       const [removed] = currentItems.splice(index, 1);
-      setItems(currentItems);
-      setRecentRemoved([...recentRemoved, removed]);
-    }
+      setItems({...items, dateKey:currentItems});
+      //agendaCache.set(dateAsKey, currentItems);
+      let currentRecentRemoved = [...recentRemoved[dateKey]];
+      currentRecentRemoved.push(removed);
+      setRecentRemoved({...recentRemoved, dateKey:currentRecentRemoved});
+    //}
   };
 
-  const handleUndo = function (e) {
-    const cloneRecentRemoved = [...recentRemoved];
+  const handleUndo = function (dateKey, e) {
+    const cloneRecentRemoved = [...recentRemoved[dateKey]];
     const lastRemoved = cloneRecentRemoved.pop();
-    setItems([...items, lastRemoved]);
-    setRecentRemoved(cloneRecentRemoved);
+    let newCurrentItems = [...items[dateKey], lastRemoved];
+    setItems({...items, dateKey:newCurrentItems});
+    setRecentRemoved({...recentRemoved, dateKey:cloneRecentRemoved});
+    //agendaCache.set(dateAsKey, newCurrentItems);
   };
 
-  const handleMarkDone = function (index, e) {
-    console.log(index);
-    const currentItems = [...items];
+  const handleMarkDone = function (dateKey, index, e) {
+    console.log(dateKey, index);
+    const currentItems = [...items[dateKey]];
     currentItems[index].status = currentItems[index].status === "Done" ? "Pending" : "Done";
-    setItems(currentItems);
-    console.log(currentItems);
-    // setItems(prevItems => prevItems.map((item, idx) =>
-    //   idx === index ? { ...item, status: "Done" } : item
-    // ));
+    setItems({...items, dateKey:currentItems});
+    //agendaCache.set(dateAsKey, currentItems);
+  };
+
+  const handleOnInput = function (target) {
+    console.log('in on input', target);
+  };
+  const handleOnBlur = function (target) {
+    console.log('in on blur', target);
   };
 
   const utcDateStringToLocaleTime = function (utcDateString) {
@@ -69,31 +99,54 @@ function RightSection(props) {
     });
     return time12hr;
   };
+
   const isMarkDone = function (item) {
     return item.status && item.status.toLowerCase() === "done";
   };
 
   return (
-    <div className="hidden lg:block w-1/5 bg-base-100/90 border-l border-base-200 text-base-content">
+    <div className="lg:block w-1/5 bg-base-100/90 border-l border-base-200 text-base-content max-h-full overflow-y-auto">
       <div className="text-xl p-2 border-b border-base-100">
         <h3 className="font-semibold text-base-content">{"Agenda: " + monthName + " " + selectedDate + ", " + year}</h3>
-        {recentRemoved.length > 0 ?
-          <a title="Undo remove"
-            className="link rounded hover:text-accent hover:bg-base-300"
+        {recentRemoved[dateAsKey] && recentRemoved[dateAsKey].length > 0 ?
+          <button title="Undo remove"
+            className="btn btn-ghost btn-xs rounded text-base-content/70 hover:text-base-content hover:bg-base-300"
             onClick={handleUndo}>
             <UndoIcon></UndoIcon>
-          </a> : <></>}
+          </button> : <></>}
       </div>
-
-      <div className="p-2 space-y-4 overflow-y-auto h-full">
-        {items.map((item, index) => (
+      <DayAgenda key={dateAsKey} selectedDateObj={dateObj} monthName={monthName} dayItems={items}
+        onRemoveItem={handleRemove}
+        onUndoRemove={handleUndo}
+        onMarkingItemDone={handleMarkDone} />
+      {/* <div className="text-xl p-2 border-b border-base-100">
+        <h3 className="font-semibold text-base-content">{"Agenda: " + monthName + " " + selectedDate + ", " + year}</h3>
+        {recentRemoved.length > 0 ?
+          <button title="Undo remove"
+            className="btn btn-ghost btn-xs rounded text-base-content/70 hover:text-base-content hover:bg-base-300"
+            onClick={handleUndo}>
+            <UndoIcon></UndoIcon>
+          </button> : <></>}
+      </div> */}
+      {/* {items.map((item, i) => (
+        <AgendaCard
+          key={year+month+selectedDate+i}
+          keyId={year+month+selectedDate+i}
+          index={i}
+          title={item.title}
+          status={item.status}
+          description="I was saying to you multiple times, but you didn't listen."
+          onCheckClick={handleMarkDone}
+          onRemoveClick={handleRemove} />
+      ))} */}
+      <div className="p-2 space-y-4">
+        {/* {items.map((item, index) => (
           <div key={index}
             className={
               "card bg-base-100 card-sm shadow-sm text-base-content " + (item.status === "Done" ? "opacity-50" : "")}>
-            <div className="card-body p-2">
+            <div className="card-body p-1">
               <div className='flex'>
-                <div className="basis-7/10">
-                  <span className="text-sm">{utcDateStringToLocaleTime(item.reminder)}</span>
+                <div className="basis-7/10 justify-left">
                 </div>
                 <div className="flex basis-3/10 justify-evenly">
                   <a className="link p-1 rounded hover:text-accent hover:bg-base-300">
@@ -131,16 +184,22 @@ function RightSection(props) {
                 </div>
               </div>
               <div>
-                <h4 className={"card-title text-md " +
-                  (item.status === "Done" ? "text-base-content/60" : "")}>
-                  {item.title}
-                </h4>
+                <ContentEditable
+                  key={index}
+                  value={item.title}
+                  onBlur={handleOnBlur}
+                  onChange={handleOnInput}
+                >
+                  <h4 className={"card-title p-1 text-md " +
+                    (item.status === "Done" ? "text-base-content/60" : "")}>
+                    {item.title}
+                  </h4>
+                </ContentEditable>
+
               </div>
-              {/* <textarea className="textarea input-primary textarea-bordered min-h-20 focus:outline-none focus:border-primary/70 focus:border-2" placeholder='Add more details..' defaultValue={item.description}></textarea> */}
-              {/* <p className="text-sm">{item.status}</p> */}
             </div>
           </div>
-        ))}
+        ))} */}
         <div className="card bg-base-100 shadow-sm">
           <div className="card-body p-2">
             <h4 className="card-title text-md">New Item:</h4>
@@ -149,7 +208,6 @@ function RightSection(props) {
               placeholder="Add new item for this day.."></input>
           </div>
         </div>
-        {/* Add more sidebar items as needed */}
       </div>
     </div>
   )
