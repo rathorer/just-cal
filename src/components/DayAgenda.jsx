@@ -5,6 +5,7 @@ import UndoIcon from './icons/Undo';
 import Editable, { ContentEditable } from './ContentEditable';
 import AgendaCard from './AgendaCard';
 import useCache from '../hooks/useCache';
+import JustDate from '../utilities/justDate';
 
 function DayAgenda(props) {
   let selectedDateObj = props.selectedDateObj;
@@ -17,8 +18,10 @@ function DayAgenda(props) {
   let year = selectedDateObj.getFullYear(),
     month = selectedDateObj.getMonth(),
     selectedDate = selectedDateObj.getDate();
-  const dateAsKey = `${year}-${month}-${selectedDate}`;
+  const dateAsKey = JustDate.toISOLikeDateString(selectedDateObj);
+  //const items = dayAgendaItems?.[dateAsKey] ?? [];
   //const [currentDate, setCurrentDate] = useState(selectedDate);
+
   const [date, setDate] = useState(selectedDateObj);
   const [items, setItems] = useState(dayAgendaItems[dateAsKey]);
   //const [recentRemoved, setRecentRemoved] = useState({});
@@ -83,12 +86,12 @@ function DayAgenda(props) {
       {console.log(items)}
       {items && items.map((item, i) => (
         <AgendaCard
-          key={year+month+selectedDate+i}
-          keyId={year+month+selectedDate+i}
+          key={dateAsKey+i}
+          keyId={dateAsKey+i}
           index={i}
           title={item.title}
           status={item.status}
-          description="I was saying to you multiple times, but you didn't listen."
+          description={item.description}
           onCheckClick={handleMarkDone}
           onRemoveClick={handleRemove} />
       ))}

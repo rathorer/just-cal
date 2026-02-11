@@ -15,7 +15,6 @@ const AgendaCard = ({
   onRemoveClick,
 }) => {
 
-  console.log('Agenda card index:', index);
   const moreActions = [
     ["Update Reminder",
       function updateRem(idx, e) {

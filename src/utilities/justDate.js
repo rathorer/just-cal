@@ -9,13 +9,13 @@ class JustDate extends Date {
         this.weekdayFormat = weekdayFormat;
         this.monthFormat = monthFormat;
     }
-    static getMonthIndex(month){
+    static getMonthIndex(month) {
         let monthIndex = parseInt(month);
-        if(isNaN(monthIndex)){
+        if (isNaN(monthIndex)) {
             month = month.toLowerCase();
             monthIndex = MONTHS.indexOf(month);
-            if(monthIndex === -1){
-                monthIndex = MONTHS.findIndex(x=> x.startsWith(month));
+            if (monthIndex === -1) {
+                monthIndex = MONTHS.findIndex(x => x.startsWith(month));
             }
         }
         return monthIndex;
@@ -43,36 +43,42 @@ class JustDate extends Date {
         // January 1st 2024 was a Monday. We iterate through the next 7 days.
         const firstDayOfWeek = this.getLocaleWeekInfo().firstDay;
         return [...Array(7).keys()].map(dayIndex => {
-          const date = new Date(Date.UTC(2024, 0, firstDayOfWeek + dayIndex));
-          return formatter.format(date);
+            const date = new Date(Date.UTC(2024, 0, firstDayOfWeek + dayIndex));
+            return formatter.format(date);
         });
     }
-    getMonthDates(){
+    getMonthDates() {
         const month = this.getMonth();
         const year = this.getFullYear();
         const currentDate = new Date(year, month, 1);
         const dates = [];
         while (currentDate.getMonth() === month) {
-            dates.push(new JustDate(currentDate)); 
+            dates.push(new JustDate(currentDate));
             currentDate.setDate(currentDate.getDate() + 1);
         }
         return dates;
     }
-    toDateString(){
+    static toISOLikeDateString(date) {
+        if (date instanceof Date) {
+            const month = (date.getMonth() + 1).toString().padStart(2, 0);
+            const year = date.getFullYear();
+            const dayDate = date.getDate().toString().padStart(2, 0);
+            return `${year}-${month}-${dayDate}`;
+        }
+        throw new TypeError("Input parameter should be date.");
+    }
+    toDateString() {
         const date = this;
-        const month = (date.getMonth()+1).toString().padStart(2, 0);
-        const year = date.getYear();
-        const dayDate = date.getDate().toString().padStart(2, 0);
-        return `${year}-${month}-${dayDate}`;
+        return JustDate.toISOLikeDateString(date);
     }
     getDayNumbersInMonth(year = this.getFullYear(), month = this.getMonth()) {
         // Setting the date to day 0 of the *next* month gets the last day of the *current* month
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         return Array.from({ length: daysInMonth }, (_, i) => i + 1);
     }
-    setTime(extractedTime){
-   // let currentDate = date;
-        if(extractedTime instanceof ExtractedTime){
+    setTime(extractedTime) {
+        // let currentDate = date;
+        if (extractedTime instanceof ExtractedTime) {
             const thisDate = this;
             thisDate.setHours(extractedTime.hour);
             thisDate.setMinutes(extractedTime.minute);

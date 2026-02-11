@@ -1,7 +1,7 @@
 import Day from './Day';
 import JustDate from './../utilities/justDate';
 import { invoke } from "@tauri-apps/api/core";
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import { useTheme } from './../hooks/useTheme';
 import { event } from '@tauri-apps/api';
 import useWindowWidth from './../hooks/useWindowWidth';
@@ -15,6 +15,8 @@ function Month(props) {
   const [monthName, setMonthName] = useState();
   const [selectedDate, setSelectedDate] = useState(props.date);
   const [monthItems, setMonthItems] = useState([]);
+  const [updatedAgendas, setUpdatedAgendas] = useState([]);
+  const [lastAgendaUpdate, setLastAgendaUpdate] = useState(null);
   const width = useWindowWidth();
 
   const month = JustDate.getMonthIndex(props.month);
@@ -22,43 +24,60 @@ function Month(props) {
   //setSelectedDate(props.date);
 
 
-  const handleSelectedDate = (date) => {
-    // console.log(date);
+  // const handleSelectedDate = (date) => {
+  //   // console.log(date);
+  //   if (Number.isInteger(date)) {
+  //     setSelectedDate(date);
+  //   } else {
+  //     console.error('Not a valid date selected.');
+  //   }
+  // };
+  const handleSelectedDate = useCallback((date) => {
     if (Number.isInteger(date)) {
       setSelectedDate(date);
     } else {
-      console.error('Not a valid date selected.');
+      console.error("Not a valid date selected.");
     }
-  };
+  }, []);
 
   const monthDates = useMemo(() => {
-    //if we have month and year defined, initlize the date using them. Else take current date.
-    let currentViewDate = (month > -1) && year ? new Date(year, month, selectedDate) : new Date();
-
+    // If we have month and year defined, initialize with the 1st of the month.
+    const currentViewDate = (month > -1) && year ? new Date(year, month, 1) : new Date();
     const justDate = new JustDate(currentViewDate, 'en-US');
-    const monthDates = justDate.getMonthDates();
+    const rawMonthDates = justDate.getMonthDates();
+
+    const weekInfo = justDate.getLocaleWeekInfo();//This gives firstDay 1 based, Monday is 1, ..
+    const firstDay = weekInfo.firstDay % 7; //To convert into 0 based. Monday is 1, Sunday is 0;
+    const firstDayOfMonth = rawMonthDates[0].getDay();
+
+    //Month 1st could be any day of week, calculate the offset from sunday (0 index) 
+    // and add undefined dates for offset
+    const monthStartOffset = firstDayOfMonth - firstDay;
+    const emptyDates = Array.from({ length: monthStartOffset }, () => undefined);
+
+    return [...emptyDates, ...rawMonthDates];
+  }, [month, year, width]); // Dependency array
+
+  useEffect(() => {
+    const currentViewDate = (month > -1) && year ? new Date(year, month, 1) : new Date();
+    const justDate = new JustDate(currentViewDate, 'en-US');
+
     const monthDays = justDate.getDayNumbersInMonth();
     const dayNameFormat = width > 700 ? 'long' : width > 300 ? 'short' : 'narrow';
     const weekDays = justDate.getLocalizedWeekdays(dayNameFormat);
     const localeMonth = justDate.getMonthName();
 
-    let weekInfo = justDate.getLocaleWeekInfo();//This gives firstDay 1 based, Monday is 1, ..
+    const weekInfo = justDate.getLocaleWeekInfo();//This gives firstDay 1 based, Monday is 1, ..
     const firstDay = weekInfo.firstDay % 7; //To convert into 0 based. Monday is 1, Sunday is 0;
-    let firstDayOfMonth = monthDates[0].getDay();
+    const firstDayOfMonth = justDate.getMonthDates()[0].getDay();
+    const monthStartOffset = firstDayOfMonth - firstDay;
 
-    let monthStartOffset = firstDayOfMonth - firstDay;
     setMonthStart(monthStartOffset);
-    let emptyDates = Array.from({ length: monthStartOffset }, (v, i) => undefined);
-    monthDates.unshift(...emptyDates);
-
     setMonthDays(monthDays);
     setWeekDays(weekDays);
     setMonthName(localeMonth);
-    //setSelectedDate(currentViewDate.getDate());
-    //console.log(monthDates);
-
-    return monthDates;
-  }, [month, year, width]); // Dependency array
+    setUpdatedAgendas(monthDays.map(day => ({ [day]: [] })));
+  }, [month, year, width]);
 
 
   useEffect(() => {
@@ -67,7 +86,7 @@ function Month(props) {
       let items = await invoke("get_items_for_month", { date: utcDateStr });
       if (items && items.length) {
         let itemsAsObj = Object.fromEntries(items);
-        //console.log('get_items_for_month', itemsAsObj);
+        console.log('get_items_for_month', itemsAsObj);
         setMonthItems(itemsAsObj);
       } else {
         setMonthItems({});
@@ -77,9 +96,35 @@ function Month(props) {
     fetchMonthItems(date);
   }, [year, month]);
 
+  const handleAgendaUpdateByRightSection = useCallback((day, agenda) => {
+    //This will be called via right section, when user updates Day using right section.
+    let dateAsKey = JustDate.toISOLikeDateString(new Date(year, month, day));
+
+    setMonthItems((currItems) => {
+      const prevItems = currItems[dateAsKey] || [];
+      const newItems = [...prevItems, agenda.user_input];
+      return { ...currItems, [dateAsKey]: newItems };
+    });
+  }, [year, month]);
+
+  const handleAgendaUpdateByDay = useCallback((date, agenda) => {
+    // let newUpdatedAgendas = [...updatedAgendas];
+    // let possibleItem = newUpdatedAgendas[day - 1];
+    // possibleItem[day] = agenda;
+    // setUpdatedAgendas(newUpdatedAgendas);
+    // let dateAsKey = new JustDate(new Date(year, month, day)).toDateString();
+    // setMonthItems([...monthItems, { dateAsKey: agenda.map(ag => ag.user_input) }]);
+    let updateDateKey = JustDate.toISOLikeDateString(date);
+    setLastAgendaUpdate({ dateKey: updateDateKey, agenda });
+    //Additional check
+    // if(possibleItem && possibleItem[day]){
+    //   possibleItem ==
+    // }
+  }, []);
+
   const isSunday = function (day, index) {
-    let isSun = (day.toLowerCase() === "sunday" 
-      || day.toLowerCase() === "sun" 
+    let isSun = (day.toLowerCase() === "sunday"
+      || day.toLowerCase() === "sun"
       || (day.toLowerCase === "s" && index === weekDays.indexOf('s')));
     //console.log(isSun);
     return isSun;
@@ -103,14 +148,17 @@ function Month(props) {
             <div className="grid grid-cols-7 divide-x divide-y divide-base-content/30 text-base-content/90 border border-base-content/30">
               {monthDates.map((date, idx) => {
                 if (date) {
-                  let dateKey = new JustDate(date).toDateString();
+                  let dateKey = JustDate.toISOLikeDateString(date);
                   let items = monthItems[dateKey];
+                  const isSelected = date.getDate() === selectedDate;
                   return <Day key={dateKey}
                     date={date}
                     index={idx}
                     selectedDate={selectedDate}
                     handleSelectedDate={handleSelectedDate}
-                    items={items} />
+                    onAgendaUpdate={handleAgendaUpdateByDay}
+                    items={items}
+                    isSelected={isSelected} />
                 } else {
                   return <div key={idx} className="p-0 h-42 flex flex-col"></div>
                 }
@@ -120,10 +168,12 @@ function Month(props) {
         </div>
       </div>
       <RightSection
-        year={year} 
-        month={month} 
-        monthName={monthName} 
-        selectedDate={selectedDate} />
+        year={year}
+        month={month}
+        monthName={monthName}
+        onAgendaUpdate={handleAgendaUpdateByRightSection}
+        selectedDate={selectedDate}
+        lastAgendaUpdate={lastAgendaUpdate} />
     </div >
   )
 }

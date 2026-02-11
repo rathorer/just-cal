@@ -3,14 +3,16 @@ import { ExtractedTime } from "./entities";
 export const Constants = Object.freeze({
     DEFAULT_REMIND_TIME: new ExtractedTime(10, 0, false),
     DEBOUNCE_DURATION: 2000,//2 secs
-    SMALL_SCREEN_WIDTH:300,
+    SMALL_SCREEN_WIDTH: 300,
     MEDIUM_SCREEN_WIDTH: 700,
-    REMINDER_INTENT_REGEX: 
-    /\b(remind(?:\s+me)?|reminder|notify(?:\s+me)?|alert(?:\s+me)?|let\s+me\s+know|ping|buzz\s+me|give\s+me\s+(?:a\s+)?heads?\s+up|drop\s+me\s+(?:a\s+)?reminder|send\s+me\s+(?:a\s+)?notification|(?:set|add|put|keep)\s+(?:a|an|the)?\s*(?:note|reminder|alarm|notification))\b/,
-    TIME_BARE_NUMBER_REGEX : /\b([1-9]|1[0-9]|2[0-3])\b/,
-    TIME_PREP_APPROX_REGEX : /\b(at|around|by|before|after|near|past|to|about|roughly|approximately|almost|nearly)\b/i,
-    TIME_ACTION_REGEX : /\b(remind|notify|alert|schedule|set|start|begin|end|finish|meet|call|join|arrive|leave|depart|interview)\b/i,
-    TIME_NATURAL_REGEX : /\b(noon|midday|midnight)\b/i,
+    MAX_CHARS_FOR_TITLE: 80,
+    SENTENCE_DETECTION: /^[^.?!]+[.?!]/,
+    REMINDER_INTENT_REGEX:
+        /\b(remind(?:\s+me)?|reminder|notify(?:\s+me)?|alert(?:\s+me)?|let\s+me\s+know|ping|buzz\s+me|give\s+me\s+(?:a\s+)?heads?\s+up|drop\s+me\s+(?:a\s+)?reminder|send\s+me\s+(?:a\s+)?notification|(?:set|add|put|keep)\s+(?:a|an|the)?\s*(?:note|reminder|alarm|notification))\b/,
+    TIME_BARE_NUMBER_REGEX: /\b([1-9]|1[0-9]|2[0-3])\b/,
+    TIME_PREP_APPROX_REGEX: /\b(at|around|by|before|after|near|past|to|about|roughly|approximately|almost|nearly)\b/i,
+    TIME_ACTION_REGEX: /\b(remind|notify|alert|schedule|set|start|begin|end|finish|meet|call|join|arrive|leave|depart|interview)\b/i,
+    TIME_NATURAL_REGEX: /\b(noon|midday|midnight)\b/i,
     TIME_EXPLICIT_REGEX: /\b(?:(?:[01]?\d|2[0-3]):[0-5]\d|(?:1[0-2]|0?\d)\s?(?:am|pm)|(?:1[0-2]|0?\d)\s?o'?clock|(?:\d{3,4})\s?hours)\b/i,
 
     NOTIFY_MINUTES_BEFORE_EVENT: 15,

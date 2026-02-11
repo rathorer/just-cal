@@ -125,7 +125,7 @@ function getWordWindow(sentence, matchIndex, phraseLength = 1, rangeForward = 3,
 
 
   return words
-    .slice(Math.max(0, wordIndex - rangeBackword), wordIndex + phraseLength + rangeForward + 1)
+    .slice(Math.max(0, wordIndex - rangeBackword), wordIndex + phraseLength + rangeForward)
     .join(' ');
 }
 
@@ -226,7 +226,8 @@ export function extractTime(sentence) {
   // 2. Bare number with validation
   const bare = sentence.match(Constants.TIME_BARE_NUMBER_REGEX);
   if (bare) {
-    const window = getWordWindow(sentence, bare.index);
+    //bare number is always 1 length
+    const window = getWordWindow(sentence, bare.index, 1, 1, 3);
 
     const hasPrep = Constants.TIME_PREP_APPROX_REGEX.test(window);
     const hasAction = Constants.TIME_ACTION_REGEX.test(window);

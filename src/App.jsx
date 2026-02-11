@@ -161,7 +161,7 @@ function App() {
         </div>
       </div>
       <div className="flex flex-1 overflow-hidden">
-        <Month date={dayDate} month={monthIndex} year={year} />
+        <Month key={`${year}-${monthIndex}`} date={dayDate} month={monthIndex} year={year} />
       </div>
 
     </main>

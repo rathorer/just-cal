@@ -1,31 +1,34 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { invoke } from "@tauri-apps/api/core";
-import CheckIcon from './icons/check';
 import UndoIcon from './icons/Undo';
-import Editable, { ContentEditable } from './ContentEditable';
-import AgendaCard from './AgendaCard';
 import useCache from '../hooks/useCache';
 import DayAgenda from './DayAgenda';
+import { getReminder } from '../utilities/reminderUtils';
+import { Constants } from '../utilities/constants';
+import JustDate from './../utilities/justDate';
 
 function RightSection(props) {
-  const cacheTTL = 30*1000;//30 seconds;
   const year = props.year;
   const month = props.month;
   const monthName = props.monthName;
+  const handleAgendaUpdate = props.onAgendaUpdate;
+  const lastAgendaUpdate = props.lastAgendaUpdate;
   let selectedDate = props.selectedDate;
-  console.log(selectedDate);
-  const dateAsKey = `${year}-${month}-${selectedDate}`;
   let dateObj = new Date(year, month, selectedDate);
+  let dateAsKey = JustDate.toISOLikeDateString(dateObj);
   console.log('dateasKey:', dateAsKey);
   //const [currentDate, setCurrentDate] = useState(selectedDate);
   const [date, setDate] = useState(dateObj);
-  const [items, setItems] = useState({[dateAsKey]:[]});
-  const [recentRemoved, setRecentRemoved] = useState({dateAsKey:[]});
-  const agendaCache = useCache(cacheTTL);
+  const [items, setItems] = useState({ [dateAsKey]: [] });
+  const [recentRemoved, setRecentRemoved] = useState({ dateAsKey: [] });
+  //const agendaCache = useCache(cacheTTL);
+  const saveTimerRef = useRef(null);
 
   useEffect(() => {
+    let dateObj = new Date(year, month, selectedDate);
+    dateAsKey = JustDate.toISOLikeDateString(dateObj);
     setDate(dateObj);
-    console.log('items in rs: ', items);
+    console.log('items in rs: ', items[dateAsKey]);
   }, [year, month, selectedDate]);
 
   useEffect(() => {
@@ -35,13 +38,14 @@ function RightSection(props) {
           //let date = new Date(year, month, selectedDate);
           //let agenda = agendaCache.get(dateAsKey);
           //if(!agenda){
-            let jsonDate = date.toISOString();
-            console.log('calling get_items_for_date.', jsonDate);
-            const dayItems = await invoke("get_items_for_date", { date:jsonDate });
-            console.log("Fetched selected day items:", dayItems);
-            
-            setItems({...items, [dateAsKey]: dayItems});
-            //agendaCache.set(dateAsKey, dayItems);
+          let jsonDate = date.toISOString();
+          console.log('calling get_items_for_date.', jsonDate);
+          const dayItems = await invoke("get_items_for_date", { date: jsonDate });
+          console.log("Fetched selected day items:", dayItems);
+
+          let selectedDateAsKey = JustDate.toISOLikeDateString(date);
+          setItems({ ...items, [selectedDateAsKey]: dayItems });
+          //agendaCache.set(dateAsKey, dayItems);
           // } else{
           //   setItems(agenda);
           // }
@@ -53,17 +57,92 @@ function RightSection(props) {
     fetchDayItems();
   }, [date, selectedDate]);
 
+  function mergeCurrentAndUpdatedAgendas(currentAgenda, updatedAgenda) {
+    const mergedAgenda = currentAgenda.map(item1 => {
+      const existingItem = updatedAgenda.find(item2 => item2.id === item1.id);
+      // In case the updatedAgenda coming from Day, it may not have desc so skip and update other things.
+      // So we update only title and 
+      let currDescription = item1.description;
+      let currStatus = item1.status;
+      let updatedItem = existingItem ? { ...item1, ...existingItem } : item1;
+      updatedItem.description = currDescription;
+      updatedItem.status = currStatus;
+      return updatedItem;
+    });
+
+    // Add unique items from arr2 that were not in arr1
+    updatedAgenda.forEach(item2 => {
+      if (!currentAgenda.some(item1 => item1.id === item2.id)) {
+        mergedAgenda.push(item2);
+      }
+    });
+    return mergedAgenda;
+  }
+
+  //Handle Agenda update from parent
+  useEffect(() => {
+    if (!lastAgendaUpdate || !date) {
+      return;
+    }
+    const selectedDateKey = JustDate.toISOLikeDateString(date);
+    if (lastAgendaUpdate.dateKey !== selectedDateKey) {
+      return;
+    }
+    // const mergedAgenda = 
+    //   mergeCurrentAndUpdatedAgendas(items[selectedDateKey] || [], lastAgendaUpdate.agenda);
+    setItems((prevItems) => {
+      const currentItems = prevItems[selectedDateKey] || [];
+      return { ...prevItems, 
+        [selectedDateKey]: mergeCurrentAndUpdatedAgendas(currentItems, lastAgendaUpdate.agenda) };
+    });
+    //setItems({...items, [selectedDateKey]: mergedAgenda});
+  }, [lastAgendaUpdate, date]);
+
+  function convertUserInputToAgenda(currentDate, userInput) {
+    if (!userInput || userInput.trim() === "") {
+      return null;
+    }
+    let currentDateAsKey = JustDate.toISOLikeDateString(currentDate);
+    console.log('converting user input to agenda:', currentDate);
+    let extractedTimes = getReminder(userInput);
+    let reminderTime = extractedTimes.reminder;
+    currentDate.setHours(reminderTime.hour);
+    currentDate.setMinutes(reminderTime.minute);
+    let reminderDateTimeStr = currentDate.toISOString();
+    let eventDateTimeStr = null;
+    if (extractedTimes.event) {
+      currentDate.setHours(extractedTimes.event.hour);
+      currentDate.setMinutes(extractedTimes.event.minute);
+      eventDateTimeStr = currentDate.toISOString();
+    }
+    let multipleSentences = userInput.match(Constants.SENTENCE_DETECTION);
+    let title = multipleSentences ? multipleSentences[0] : userInput;
+    let description = userInput;
+    if (title.length > Constants.MAX_CHARS_FOR_TITLE) {
+      title = title.substring(0, Constants.MAX_CHARS_FOR_TITLE);
+    }
+    return {
+      id: items[currentDateAsKey].length + 1,
+      user_input: userInput,
+      title: title,
+      description: description,
+      status: "Pending",
+      time: eventDateTimeStr,
+      reminder: reminderDateTimeStr
+    }
+  }
+
   const handleRemove = function (dateKey, index, e) {
     //const target = e.currentTarget;
     //console.log(target);
     //if (target && target.attributes.name.value === 'removeItem') {
-      let currentItems = [...items[dateKey]];
-      const [removed] = currentItems.splice(index, 1);
-      setItems({...items, dateKey:currentItems});
-      //agendaCache.set(dateAsKey, currentItems);
-      let currentRecentRemoved = [...recentRemoved[dateKey]];
-      currentRecentRemoved.push(removed);
-      setRecentRemoved({...recentRemoved, dateKey:currentRecentRemoved});
+    let currentItems = [...items[dateKey]];
+    const [removed] = currentItems.splice(index, 1);
+    setItems({ ...items, dateKey: currentItems });
+    //agendaCache.set(dateAsKey, currentItems);
+    let currentRecentRemoved = [...recentRemoved[dateKey]];
+    currentRecentRemoved.push(removed);
+    setRecentRemoved({ ...recentRemoved, dateKey: currentRecentRemoved });
     //}
   };
 
@@ -71,8 +150,8 @@ function RightSection(props) {
     const cloneRecentRemoved = [...recentRemoved[dateKey]];
     const lastRemoved = cloneRecentRemoved.pop();
     let newCurrentItems = [...items[dateKey], lastRemoved];
-    setItems({...items, dateKey:newCurrentItems});
-    setRecentRemoved({...recentRemoved, dateKey:cloneRecentRemoved});
+    setItems({ ...items, dateKey: newCurrentItems });
+    setRecentRemoved({ ...recentRemoved, dateKey: cloneRecentRemoved });
     //agendaCache.set(dateAsKey, newCurrentItems);
   };
 
@@ -80,15 +159,70 @@ function RightSection(props) {
     console.log(dateKey, index);
     const currentItems = [...items[dateKey]];
     currentItems[index].status = currentItems[index].status === "Done" ? "Pending" : "Done";
-    setItems({...items, dateKey:currentItems});
+    setItems({ ...items, dateKey: currentItems });
     //agendaCache.set(dateAsKey, currentItems);
   };
 
-  const handleOnInput = function (target) {
-    console.log('in on input', target);
+  const handleNewAgendaItem = function (userInput) {
+    console.log('adding new agenda currentdate:', date);
+    let selectedDateAsKey = JustDate.toISOLikeDateString(date);
+    let currentItems = [...items[selectedDateAsKey]];
+    let newAgendaItem = convertUserInputToAgenda(date, userInput);
+    if (newAgendaItem) {
+      currentItems.push(newAgendaItem);
+      setItems({ ...items, [selectedDateAsKey]: currentItems });
+      handleAgendaUpdate(selectedDate, newAgendaItem);
+    }
   };
-  const handleOnBlur = function (target) {
-    console.log('in on blur', target);
+
+  function scheduleAdd(textarea) {
+    try {
+      clearTimeout(saveTimerRef.current);
+    } catch (e) { }
+    saveTimerRef.current = setTimeout(() => {
+      let userInput = textarea.value;
+      handleNewAgendaItem(userInput);
+      textarea.value = "";
+    }, Constants.DEBOUNCE_DURATION);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handleOnInput = function (e) {
+    const target = e.target;
+    const val = target.value;
+    if (val && val.trim().length > 1) {
+      scheduleAdd(target);
+    }
+  };
+  const handleOnBlur = function (e) {
+    const target = e.target;
+    const val = target.val;
+    if (val && val.trim().length > 1) {
+      handleNewAgendaItem(val);
+      target.value = "";
+    }
+  };
+  const handleKeyDown = function (e) {
+    const isModifierPressed = e.ctrlKey || e.metaKey;
+    if (isModifierPressed) {
+      const key = e.key.toLowerCase();
+      const target = e.target;
+      if (key === 'enter' || key === 's') {
+        e.preventDefault();
+        const val = target.value;
+        if (val && val.trim().length > 1) {
+          handleNewAgendaItem(val);
+          target.value = "";
+        }
+      }
+    }
   };
 
   const utcDateStringToLocaleTime = function (utcDateString) {
@@ -118,6 +252,7 @@ function RightSection(props) {
       <DayAgenda key={dateAsKey} selectedDateObj={dateObj} monthName={monthName} dayItems={items}
         onRemoveItem={handleRemove}
         onUndoRemove={handleUndo}
+        onAgendaUpdate={handleAgendaUpdate}
         onMarkingItemDone={handleMarkDone} />
       {/* <div className="text-xl p-2 border-b border-base-100">
         <h3 className="font-semibold text-base-content">{"Agenda: " + monthName + " " + selectedDate + ", " + year}</h3>
@@ -203,9 +338,15 @@ function RightSection(props) {
         <div className="card bg-base-100 shadow-sm">
           <div className="card-body p-2">
             <h4 className="card-title text-md">New Item:</h4>
-            <input type="text"
+            {/* <input type="text"
               className="input input-primary text-md input-md w-full max-w-xs bg-base-100 focus:outline-none focus:border-primary/70 focus:border-2"
-              placeholder="Add new item for this day.."></input>
+              placeholder="Add new item for this day.."></input> */}
+            <textarea className="textarea textarea-ghost textarea-lg textarea-primary focus:outline-none focus:border-primary/70 focus:border-2"
+              placeholder="Add new item for this day.."
+              onInput={handleOnInput}
+              onBlur={handleOnBlur}
+              onKeyDown={handleKeyDown}>
+            </textarea>
           </div>
         </div>
       </div>

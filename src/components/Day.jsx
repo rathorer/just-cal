@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Constants } from "../utilities/constants";
 import CheckIcon from "./icons/check";
@@ -6,7 +6,7 @@ import { getReminder } from "../utilities/reminderUtils";
 
 //import { DayPicker } from "react-day-picker";
 
-export default function Day(props) {
+function Day(props) {
   const [greetMsg, setGreetMsg] = useState("");
   let date = props.date;//JustDate object
   //TODO: Start here, date is coming invalid.
@@ -14,18 +14,22 @@ export default function Day(props) {
   let index = props.index;
   let selectedDate = props.selectedDate;
   let existingItems = props.items || [];
-  //console.log(existingItems);
+  let handleAgendaUpdateToParent = props.onAgendaUpdate;
+  //const onDayItemUpdate = 
+  console.log('existingItems '+ date.getDate(), existingItems);
   // const [date, setDate] = useState(currentDate);
-  const [tasks, setTasks] = useState(props.items || []);
+  //const [tasks, setTasks] = useState(props.items || []);
   const tasksRef = useRef(existingItems);
   const [isDirty, setIsDirty] = useState(false)
   const [currentDate, setCurrentDate] = useState(date);
   const editorRef = useRef(null);
   const saveTimerRef = useRef(null);
+  const skipFirstEnterSaveRef = useRef(false);
 
   useEffect(() => {
-    console.log(date);
+    //console.log(date);
     setCurrentDate(date);
+    setIsDirty(false);
   }, [date]);
 
   // useEffect(() => {
@@ -85,6 +89,20 @@ export default function Day(props) {
     }
   }, [selectedDate]);
 
+  // useEffect(() => {
+  //   let ul = editorRef.current && editorRef.current.firstChild;
+  //   console.log(date, selectedDate);
+  //   console.log('trying to scroll..');
+  //   if (ul) {
+  //     const lastChild = ul.lastElementChild;
+  //     console.log('last', lastChild);
+  //     if (lastChild) {
+  //       // Use scrollIntoView to bring the last element into view
+  //       lastChild.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  //     }
+  //   }
+  // }, [existingItems])
+
   const handleDayClick = (event, t) => {
     //console.log(event);
     let h2 = event && event.target;//.children
@@ -103,6 +121,21 @@ export default function Day(props) {
     }, Constants.DEBOUNCE_DURATION);
   }
 
+  function getItemsFromUl(ul) {
+    if (!ul) {
+      return [];
+    }
+    return Array.from(ul.querySelectorAll('li'))
+      .flatMap(li => {
+        let text = li.innerText;
+        text = text && text.trim();
+        if (text && text.length > 0) {
+          return [text];
+        }
+        return [];
+      });
+  }
+
   useEffect(() => {
     return () => {
       if (saveTimerRef.current) {
@@ -113,17 +146,9 @@ export default function Day(props) {
 
   const handleSave = async (ul) => {
     if (ul) {
-      const items = Array.from(ul.querySelectorAll('li'))
-        .flatMap(li => {
-          let text = li.innerText;
-          text = text && text.trim();
-          if (text && text.length > 0) {
-            return [text];
-          }
-          return [];
-        });
+      const items = getItemsFromUl(ul);
       console.log('items before saving:', items);
-      if (dayItemsChanged(items)) {
+      if (dayItemsChanged(items, existingItems)) {
         setIsDirty(true);
         tasksRef.current = items;//update new item
         //todo:Lets save to localStorage first and fire a request to save at backend
@@ -132,7 +157,9 @@ export default function Day(props) {
         try {
           console.log('save_items_for_date', backendItems);
           const resp = await invoke("save_items_for_date", { date: date.toISOString(), items: backendItems });
-
+          //Send event
+          handleAgendaUpdateToParent(date, backendItems);
+          setIsDirty(false);
         } catch (error) {
           console.error('Error while saving..', error);
         }
@@ -141,8 +168,7 @@ export default function Day(props) {
     }
   };
 
-  const dayItemsChanged = (items) => {
-    let oldItems = tasksRef.current;
+  const dayItemsChanged = (items, oldItems) => {
     if (items) {
       if (oldItems.length === items.length) {
         //lets check each item.
@@ -194,9 +220,14 @@ export default function Day(props) {
   };
 
   const handleInput = (e) => {
-    console.log('on input');
     const ul = e.currentTarget.querySelector('ul') || (editorRef.current && editorRef.current.firstChild);
-    if (ul) scheduleSave(ul);
+    if (ul) {
+      const items = getItemsFromUl(ul);
+      if (dayItemsChanged(items, existingItems)) {
+        setIsDirty(true);
+      }
+      scheduleSave(ul);
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -209,6 +240,16 @@ export default function Day(props) {
         document.execCommand('insertUnorderedList');
       }
       //take the prev li and insert into our tasks
+      if (skipFirstEnterSaveRef.current) {
+        skipFirstEnterSaveRef.current = false;
+        return;
+      }
+      if (ul) {
+        const items = getItemsFromUl(ul);
+        if (dayItemsChanged(items, existingItems)) {
+          setIsDirty(true);
+        }
+      }
       handleSave(ul);
     }
     if (e.key === 'Backspace' || e.key === 'Delete') {
@@ -218,6 +259,10 @@ export default function Day(props) {
           (ul.firstChild.innerText === '' || ul.firstChild.innerText === '\n');
         if (isLast) {
           e.preventDefault();
+        }
+        const items = getItemsFromUl(ul);
+        if (dayItemsChanged(items, existingItems)) {
+          setIsDirty(true);
         }
         scheduleSave(ul);
       }
@@ -248,7 +293,13 @@ export default function Day(props) {
     const text = e.clipboardData.getData('text/plain');
     insertTextAtCursor(text);
     const ul = editorRef.current && editorRef.current.firstChild;
-    if (ul) scheduleSave(ul);
+    if (ul) {
+      const items = getItemsFromUl(ul);
+      if (dayItemsChanged(items, existingItems)) {
+        setIsDirty(true);
+      }
+      scheduleSave(ul);
+    }
   };
 
   const handleFocus = (e) => {
@@ -260,6 +311,9 @@ export default function Day(props) {
     //If no li inside ul, add first one and focus on it, edit range so user types inside li.
     if (ul && ul.children.length === 0) {
       addFirstLiAndFocus(ul);
+    }
+    if (ul && ul.children.length > 0 && existingItems.length > 0) {
+      skipFirstEnterSaveRef.current = true;
     }
     handleDayClick(e);
   };
@@ -294,7 +348,10 @@ export default function Day(props) {
           <h2 className={"text-xl pt-1 pr-2 font-bold flex justify-end " +
             (date && date.getDate() === selectedDate ?
               "text-info-content/90 bg-info/80 hover:text-info-content hover:bg-info " : "")}
-            onClick={handleDayClick}>{date.getDate()}</h2></a>
+            onClick={handleDayClick}>
+            {date.getDate()}
+            {isDirty ? <span className="ml-1 text-warning">*</span> : null}
+          </h2></a>
         {/* <div className="card bg-base-100">*/}
         <div id={"editable-div-" + index} key={index}
           className="overflow-y-auto min-h-auto max-h-full no-scrollbar p-0 text-xxs focus:outline-1 custom-editor"
@@ -321,3 +378,35 @@ export default function Day(props) {
     </div>
   );
 }
+
+function areEqual(prevProps, nextProps) {
+  const prevDate = prevProps.date;
+  const nextDate = nextProps.date;
+  const prevDateTime = prevDate ? prevDate.getTime() : null;
+  const nextDateTime = nextDate ? nextDate.getTime() : null;
+
+  if (prevDateTime !== nextDateTime) {
+    return false;
+  }
+  const prevSelected = prevProps.date?.getDate() === prevProps.selectedDate;
+  const nextSelected = nextProps.date?.getDate() === nextProps.selectedDate;
+
+  if (prevSelected !== nextSelected) {
+    return false;
+  }
+
+  const prevItems = prevProps.items || [];
+  const nextItems = nextProps.items || [];
+  if (prevItems.length !== nextItems.length) {
+    return false;
+  }
+  for (let i = 0; i < prevItems.length; i++) {
+    if (prevItems[i] !== nextItems[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+export default memo(Day, areEqual);
