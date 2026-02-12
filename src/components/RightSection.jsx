@@ -11,7 +11,8 @@ function RightSection(props) {
   const year = props.year;
   const month = props.month;
   const monthName = props.monthName;
-  const handleAgendaUpdate = props.onAgendaUpdate;
+  const handleAgendaAddParent = props.onAgendaAdd;
+  const handleAgendaEditParent = props.onAgendaEdit;
   const lastAgendaUpdate = props.lastAgendaUpdate;
   let selectedDate = props.selectedDate;
   let dateObj = new Date(year, month, selectedDate);
@@ -163,6 +164,22 @@ function RightSection(props) {
     //agendaCache.set(dateAsKey, currentItems);
   };
 
+  const handleAgendaEdit = function (dateKey, index, patch) {
+    setItems((prevItems) => {
+      const currentItems = prevItems[dateKey] || [];
+      const existingItem = currentItems[index];
+      if (!existingItem) {
+        return prevItems;
+      }
+      const newItems = [...currentItems];
+      let updatedItem = { ...existingItem, ...patch };
+      newItems[index] = updatedItem
+      let updatedItems = { ...prevItems, [dateKey]: newItems };
+      handleAgendaEditParent(dateKey, index, updatedItem);//TODO: derive date from dateKey.
+      return updatedItems;
+    });
+  };
+
   const handleNewAgendaItem = function (userInput) {
     console.log('adding new agenda currentdate:', date);
     let selectedDateAsKey = JustDate.toISOLikeDateString(date);
@@ -171,7 +188,7 @@ function RightSection(props) {
     if (newAgendaItem) {
       currentItems.push(newAgendaItem);
       setItems({ ...items, [selectedDateAsKey]: currentItems });
-      handleAgendaUpdate(selectedDate, newAgendaItem);
+      handleAgendaAddParent(selectedDate, newAgendaItem);
     }
   };
 
@@ -252,8 +269,9 @@ function RightSection(props) {
       <DayAgenda key={dateAsKey} selectedDateObj={dateObj} monthName={monthName} dayItems={items}
         onRemoveItem={handleRemove}
         onUndoRemove={handleUndo}
-        onAgendaUpdate={handleAgendaUpdate}
-        onMarkingItemDone={handleMarkDone} />
+        onAgendaUpdate={handleAgendaAddParent}
+        onMarkingItemDone={handleMarkDone}
+        onAgendaEdit={handleAgendaEdit} />
       {/* <div className="text-xl p-2 border-b border-base-100">
         <h3 className="font-semibold text-base-content">{"Agenda: " + monthName + " " + selectedDate + ", " + year}</h3>
         {recentRemoved.length > 0 ?

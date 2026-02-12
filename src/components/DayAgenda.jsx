@@ -14,6 +14,7 @@ function DayAgenda(props) {
   const onRemoveItem = props.onRemoveItem;
   const onMarkingItemDone = props.onMarkingItemDone;
   const onUndoRemove = props.onUndoRemove;
+  const onAgendaEdit = props.onAgendaEdit;
 
   let year = selectedDateObj.getFullYear(),
     month = selectedDateObj.getMonth(),
@@ -92,6 +93,7 @@ function DayAgenda(props) {
           title={item.title}
           status={item.status}
           description={item.description}
+          onItemUpdate={(index, patch) => onAgendaEdit?.(dateAsKey, index, patch)}
           onCheckClick={handleMarkDone}
           onRemoveClick={handleRemove} />
       ))}

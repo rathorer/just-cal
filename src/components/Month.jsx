@@ -96,7 +96,7 @@ function Month(props) {
     fetchMonthItems(date);
   }, [year, month]);
 
-  const handleAgendaUpdateByRightSection = useCallback((day, agenda) => {
+  const handleAddAgendaByRightSection = useCallback((day, agenda) => {
     //This will be called via right section, when user updates Day using right section.
     let dateAsKey = JustDate.toISOLikeDateString(new Date(year, month, day));
 
@@ -104,6 +104,16 @@ function Month(props) {
       const prevItems = currItems[dateAsKey] || [];
       const newItems = [...prevItems, agenda.user_input];
       return { ...currItems, [dateAsKey]: newItems };
+    });
+  }, [year, month]);
+
+  const handleEditAgendaByRightSection = useCallback((dateKey, index, updatedAgenda) => {
+    //This will be called via right section, when user updates Day using right section.
+    setMonthItems((currItems) => {
+      const prevItems = currItems[dateKey] || []; 
+      const newItems = [...prevItems];
+      newItems[index] = updatedAgenda.user_input;
+      return { ...currItems, [dateKey]: newItems };
     });
   }, [year, month]);
 
@@ -171,7 +181,8 @@ function Month(props) {
         year={year}
         month={month}
         monthName={monthName}
-        onAgendaUpdate={handleAgendaUpdateByRightSection}
+        onAgendaAdd={handleAddAgendaByRightSection}
+        onAgendaEdit={handleEditAgendaByRightSection}
         selectedDate={selectedDate}
         lastAgendaUpdate={lastAgendaUpdate} />
     </div >

@@ -13,6 +13,7 @@ const AgendaCard = ({
   onMenuClick,
   onCheckClick,
   onRemoveClick,
+  onItemUpdate,
 }) => {
 
   const moreActions = [
@@ -33,11 +34,24 @@ const AgendaCard = ({
   const isMarkDone = function () {
     return status && status.toLowerCase() === "done";
   };
-  const handleOnInput = function (target) {
-    console.log('in on input', target);
+  const toPlainText = (html) => {
+    if (!html) {
+      return "";
+    }
+    return html.replace(/<[^>]*>/g, "").trim();
   };
-  const handleOnBlur = function (target) {
-    console.log('in on blur', target);
+
+  const handleTitleBlur = (html) => {
+    const nextTitle = toPlainText(html);
+    if (nextTitle.length === 0) {
+      return;
+    }
+    onItemUpdate?.(index, { title: nextTitle, user_input: nextTitle });
+  };
+
+  const handleDescriptionBlur = (html) => {
+    const nextDescription = toPlainText(html);
+    onItemUpdate?.(index, { description: nextDescription });
   };
 
   return (
@@ -87,17 +101,15 @@ const AgendaCard = ({
         <div className={isMarkDone() ? "transition-all duration-200 opacity-40 pointer-events-none": undefined}>
         {/* Content */}
         <ContentEditable key={keyId}
-          value={title}
-          onBlur={handleOnBlur}
-          onChange={handleOnInput}>
+          onBlur={handleTitleBlur}>
           <h2 className="text-lg font-bold leading-snug tracking-tight">
             {title}
           </h2>
         </ContentEditable>
-        <ContentEditable>
-        <p className="text-md text-base-content/80 mt-1">
-          {description}
-        </p>
+        <ContentEditable onBlur={handleDescriptionBlur}>
+          <p className="text-md text-base-content/80 mt-1">
+            {description}
+          </p>
         </ContentEditable>
         </div>
       </div>

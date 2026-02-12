@@ -10,15 +10,17 @@ export const ContentEditable = ({
   onBlur
 }) => {
 
-  const ref = useRef(null)
-  const mounted = useRef(false)
-
+  const ref = useRef(null);
+  const isFocused = useRef(false);
+  
   useEffect(() => {
-    if (!mounted.current && ref.current) {
-      const rawHTML = renderToStaticMarkup(children);
-
-      ref.current.innerHTML = sanitizeHTML(rawHTML);
-      mounted.current = true
+    if (!ref.current || isFocused.current) {
+      return;
+    }
+    const rawHTML = renderToStaticMarkup(children);
+    const sanitized = sanitizeHTML(rawHTML);
+    if (ref.current.innerHTML !== sanitized) {
+      ref.current.innerHTML = sanitized;
     }
   }, [children])
 
@@ -74,7 +76,11 @@ export const ContentEditable = ({
       suppressContentEditableWarning
       onPaste={handlePaste}
       onInput={() => onChange?.(sanitizeHTML(ref.current.innerHTML))}
+      onFocus={() => {
+        isFocused.current = true;
+      }}
       onBlur={() => {
+        isFocused.current = false;
         ref.current.innerHTML = sanitizeHTML(ref.current.innerHTML)
         onBlur?.(ref.current.innerHTML)
       }}

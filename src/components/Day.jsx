@@ -45,6 +45,7 @@ function Day(props) {
 
   function prepareItems(items) {
     //let selectedDateObj = new JustDate(currentDate);
+    items = items.filter(x=> x);
     return items.map((item, i) => {
       let extractedTimes = getReminder(item);
       let reminderTime = extractedTimes.reminder;
@@ -331,7 +332,9 @@ function Day(props) {
     }
     //Get all items and update;
     if (ul) {
-      handleSave(ul);
+      if(isDirty){
+        handleSave(ul);
+      }
     }
   };
 
