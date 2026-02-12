@@ -6,6 +6,9 @@ export const Constants = Object.freeze({
     SMALL_SCREEN_WIDTH: 300,
     MEDIUM_SCREEN_WIDTH: 700,
     MAX_CHARS_FOR_TITLE: 80,
+    LEFT_SECTION_DEFAULT_WIDTH: 80, //%
+    LEFT_SECTION_MIN_WIDTH: 50, //%
+    LEFT_SECTION_MAX_WIDTH: 90, //%
     SENTENCE_DETECTION: /^[^.?!]+[.?!]/,
     REMINDER_INTENT_REGEX:
         /\b(remind(?:\s+me)?|reminder|notify(?:\s+me)?|alert(?:\s+me)?|let\s+me\s+know|ping|buzz\s+me|give\s+me\s+(?:a\s+)?heads?\s+up|drop\s+me\s+(?:a\s+)?reminder|send\s+me\s+(?:a\s+)?notification|(?:set|add|put|keep)\s+(?:a|an|the)?\s*(?:note|reminder|alarm|notification))\b/,

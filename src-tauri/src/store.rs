@@ -34,7 +34,7 @@ pub fn date_to_store_filename(date: &str) -> String {
     format!("{}.json", month_key)
 }
 
-//Store helper functions, create newm load from disk, save to disk, add to appstate etc.
+//Store helper functions, create new load from disk, save to disk, add to appstate etc.
 pub fn reload_store_from_disk<R: Runtime>(app: &tauri::AppHandle<R>, date: String) -> Result<Arc<Store<R>>, String> {
     let filename = date_to_store_filename(&date);
     let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;

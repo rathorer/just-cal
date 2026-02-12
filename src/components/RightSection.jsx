@@ -256,7 +256,7 @@ function RightSection(props) {
   };
 
   return (
-    <div className="lg:block w-1/5 bg-base-100/90 border-l border-base-200 text-base-content max-h-full overflow-y-auto">
+    <div className="lg:block bg-base-100/90 border-l border-base-200 text-base-content max-h-full overflow-y-auto">
       <div className="text-xl p-2 border-b border-base-100">
         <h3 className="font-semibold text-base-content">{"Agenda: " + monthName + " " + selectedDate + ", " + year}</h3>
         {recentRemoved[dateAsKey] && recentRemoved[dateAsKey].length > 0 ?
@@ -292,7 +292,7 @@ function RightSection(props) {
           onCheckClick={handleMarkDone}
           onRemoveClick={handleRemove} />
       ))} */}
-      <div className="p-2 space-y-4">
+      <div className="p-0 space-y-2 relative group card bg-base-100 shadow-md border border-base-300 mb-2">
         {/* {items.map((item, index) => (
           <div key={index}
             className={
@@ -353,13 +353,13 @@ function RightSection(props) {
             </div>
           </div>
         ))} */}
-        <div className="card bg-base-100 shadow-sm">
-          <div className="card-body p-2">
-            <h4 className="card-title text-md">New Item:</h4>
+        {/* <div className="card bg-base-100 shadow-sm"> */}
+          <div className="card-body p-4">
+            <h4 className="card-title text-md">New agenda item:</h4>
             {/* <input type="text"
               className="input input-primary text-md input-md w-full max-w-xs bg-base-100 focus:outline-none focus:border-primary/70 focus:border-2"
               placeholder="Add new item for this day.."></input> */}
-            <textarea className="textarea textarea-ghost textarea-lg textarea-primary focus:outline-none focus:border-primary/70 focus:border-2"
+            <textarea className="textarea w-auto textarea-ghost textarea-lg textarea-primary focus:outline-none focus:border-primary/70 focus:border-2"
               placeholder="Add new item for this day.."
               onInput={handleOnInput}
               onBlur={handleOnBlur}
@@ -367,7 +367,7 @@ function RightSection(props) {
             </textarea>
           </div>
         </div>
-      </div>
+      {/* </div> */}
     </div>
   )
 }

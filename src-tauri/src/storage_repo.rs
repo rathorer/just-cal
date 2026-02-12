@@ -101,7 +101,7 @@ pub async fn get_items_for_month(manager: State<'_, StoreManager<Wry>>, date: Da
     //     .into_iter()  
     //     .map(|f: Item| f.user_input.clone())
     //     .collect();
-    println!("Items in store: {:?}", store.entries());
+    //println!("Items in store: {:?}", store.entries());
     // Each value in store is Vec<Item>, so deserialize as Vec<Item> and flatten
     let month_items: Vec<(String, Vec<String>)> = store
         .entries()
@@ -120,7 +120,7 @@ pub async fn get_items_for_month(manager: State<'_, StoreManager<Wry>>, date: Da
         })
         .collect();
 
-    println!("filtered items: {:?}", month_items);
+    //println!("filtered items: {:?}", month_items);
     Ok(month_items)
 }
 
@@ -131,10 +131,10 @@ pub async fn save_items_for_date(manager: State<'_, StoreManager<Wry>>, date: Da
     let locale_date_str = locale_datetime.to_string();
     let key = convert_date_to_key(locale_date_str.clone());
     let store_key = convert_date_to_month_key(locale_date_str.clone());
-    println!("in backend save items for date {}", store_key);
+    //println!("in backend save items for date {}", store_key);
     let stores = manager.stores.write().unwrap();
     let all_stores = format!("{:?}", stores.clone().into_keys());
-    println!("save: stores in state {}", all_stores);
+    //println!("save: stores in state {}", all_stores);
     let store = stores
         .get(&store_key)
         .ok_or("Store not found")?;

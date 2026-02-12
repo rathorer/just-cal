@@ -12,14 +12,19 @@ import NextIcon from "./components/icons/Next";
 import JumpNextIcon from "./components/icons/JumpNext";
 import JumpPrevIcon from "./components/icons/JumpPrev";
 import { arch, hostname, locale } from '@tauri-apps/plugin-os';
+import Year from "./components/Year";
 
+const VIEW_TYPE = Object.freeze({ Year: 0, Month: 1, Week: 2 });
 function App() {
-  const LASTMONTH_INDEX = 11; // December;
+  const LASTMONTH_INDEX = 11; // December; TODO:This could be diff in diff locale
   const { theme, toggleTheme } = useTheme();
   const [monthIndex, setMonthIndex] = useState(-1);
-  const [year, setYear] = useState(1969);
+  const [year, setYear] = useState(1970);
   const [monthName, setMonthName] = useState("");
   const [dayDate, setDayDate] = useState();
+  const [userLocale, setUserLocale] = useState("en-US");
+  const [currentView, setCurrentView] = useState(VIEW_TYPE.Month);
+  const [nextPrevText, setNextPrevText] = useState("month");
 
   useEffect(() => {
     async function getLocale() {
@@ -27,6 +32,7 @@ function App() {
       if (userLocale) {
         console.log("User's locale:", userLocale);
         // Use the locale string for your internationalization (i18n) logic
+        setUserLocale(userLocale);
       } else {
         console.log("Could not detect locale.");
       }
@@ -34,6 +40,18 @@ function App() {
     getLocale();
   }, []);
 
+  useEffect(() => {
+    async function updateBackendStore(date) {
+      let utcDateStr = date.toISOString();
+      try {
+        await invoke("update_store", { date: utcDateStr });
+      } catch (error) {
+        console.error('Error while updating store at backend..', error);
+      }
+    }
+    let date = new Date(year, monthIndex, dayDate);
+    updateBackendStore(date);
+  }, [year, monthIndex]);
 
   useMemo(() => {
     let currentDate;
@@ -45,7 +63,7 @@ function App() {
     } else {
       currentDate = new Date(year, monthIndex, dayDate);
     }
-    let justDate = new JustDate(currentDate, "en-US");
+    let justDate = new JustDate(currentDate, userLocale);
     setMonthName(justDate.getMonthName());
     setDayDate(currentDate.getDate());
   }, [monthIndex, year]);
@@ -53,6 +71,30 @@ function App() {
   const openMenu = () => {
     console.log("Menu Open");
   }
+
+  const handleMonthSelection = (monthIndex) => {
+    setMonthIndex(monthIndex);
+    let currentDate = new Date(year, monthIndex, dayDate);
+    let justDate = new JustDate(currentDate, userLocale);
+    setMonthName(justDate.getMonthName());
+    setCurrentView(VIEW_TYPE.Month);
+  };
+
+  const handleNext = () => {
+    if (currentView === VIEW_TYPE.Month) {
+      handleNextMonth();
+    } else {
+      handleNextYear();
+    }
+  };
+  const handlePrev = () => {
+    if (currentView === VIEW_TYPE.Month) {
+      handlePrevMonth();
+    } else {
+      handlePrevYear();
+    }
+  }
+
   const handlePrevMonth = () => {
     // Ensure the index doesn't go below zero
     if (year === 1970 && monthIndex === 0) {
@@ -75,6 +117,17 @@ function App() {
       setMonthIndex(monthIndex + 1);
     }
   };
+  const handleView = (e) => {
+    console.log(e.target);
+    if (currentView === VIEW_TYPE.Month) {
+      setCurrentView(VIEW_TYPE.Year);
+      setNextPrevText("year");
+    } else {
+      setCurrentView(VIEW_TYPE.Month);
+      setCurrentView("month");
+    }
+  };
+
   const handlePrevYear = () => {
     if (year === 1970) {
       return;
@@ -115,35 +168,38 @@ function App() {
         <div className="h-12 shadow-md flex flex-row items-center px-2 border-b border-base-content/20">
           <div className="flex justify-start basis-4/5">
             <div className="flex justify-start basis-1/5 gap-6">
-              <a className="link text-header-base1-content inline-block p-2 rounded hover:text-accent hover:bg-base-200/50"
+              {/* <a className="link text-header-base1-content inline-block p-2 rounded hover:text-accent hover:bg-base-200/50"
                 onClick={handlePrevYear}
                 disabled={monthIndex === 0 && year === 1970}
                 style={{ opacity: monthIndex === 0 && year === 1970 ? 0.5 : 1 }}
                 title="Previous year">
                 <JumpPrevIcon title="Previous year" />
-              </a>
-              <a className="link text-header-base1-content inline-block p-2 rounded hover:text-accent hover:bg-base-200/50"
-                onClick={handlePrevMonth}
+              </a> */}
+              <a className="link text-header-base1-content inline-block p-1 rounded hover:text-accent hover:bg-base-200/50"
+                onClick={handlePrev}
                 disabled={monthIndex === 0 && year === 1970}
                 style={{ opacity: monthIndex === 0 && year === 1970 ? 0.5 : 1 }}
-                title="Previous month">
-                <PrevIcon title="Previous month" />
+                title={"Previous " + nextPrevText}>
+                <PrevIcon title={"Previous " + nextPrevText} />
               </a>
             </div>
             <div className="flex justify-center basis-3/5">
-              <h1 className="text-xl font-bold p-2 inline-block text-header-base1-content">{monthName} {year}</h1>
+              <a className="link  hover:text-accent hover:bg-base-200/50"
+                onClick={handleView}>
+                <h1 className="text-xl font-bold p-2 inline-block text-header-base1-content">{currentView === VIEW_TYPE.Month ? `${monthName} ${year}` : year}</h1>
+              </a>
             </div>
             <div className="flex justify-end basis-1/5 gap-6">
-              <a className="link text-header-base1-content inline-block p-2 rounded hover:text-accent hover:bg-base-200/50"
-                onClick={handleNextMonth}
-                title="Next month">
-                <NextIcon title="Next month" />
+              <a className="link text-header-base1-content inline-block p-1 rounded hover:text-accent hover:bg-base-200/50"
+                onClick={handleNext}
+                title={"Next " + nextPrevText}>
+                <NextIcon className="w-7 h-7" title={"Next " + nextPrevText} />
               </a>
-              <a className="link text-header-base1-content inline-block p-2 rounded hover:text-accent hover:bg-base-200/50"
+              {/* <a className="link text-header-base1-content inline-block p-2 rounded hover:text-accent hover:bg-base-200/50"
                 onClick={handleNextYear}
                 title="Next year">
                 <JumpNextIcon title="Next year" />
-              </a>
+              </a> */}
             </div>
           </div>
           <div className="basis-1/5 flex justify-end gap-2">
@@ -161,7 +217,12 @@ function App() {
         </div>
       </div>
       <div className="flex flex-1 overflow-hidden">
-        <Month key={`${year}-${monthIndex}`} date={dayDate} month={monthIndex} year={year} />
+        {
+          currentView == VIEW_TYPE.Month ?
+            <Month key={`${year}-${monthIndex}`} date={dayDate} month={monthIndex} year={year} />
+            :
+            <Year key={`${year}`} year={year} locale={userLocale} onMonthClick={handleMonthSelection} />
+        }
       </div>
 
     </main>

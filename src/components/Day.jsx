@@ -341,7 +341,7 @@ function Day(props) {
   return (
     <div key={index}
       className={"p-0 h-42 flex flex-col hover:cursor-text"
-        + (date && date.getDate() === selectedDate ? "border-2 border-info/80" : "")
+        + (date && date.getDate() === selectedDate ? " border-1 !border-info/80" : "")
         + (index >= 28 ? "border-r border-base-content/20" : "")}//this is to avoid right border
     //  missing in last div, 28 index tells the last line has items.
     >
@@ -353,7 +353,7 @@ function Day(props) {
               "text-info-content/90 bg-info/80 hover:text-info-content hover:bg-info " : "")}
             onClick={handleDayClick}>
             {date.getDate()}
-            {isDirty ? <span className="ml-1 text-warning">*</span> : null}
+            {isDirty ? <span className="ml-1 text-base-content">*</span> : null}
           </h2></a>
         {/* <div className="card bg-base-100">*/}
         <div id={"editable-div-" + index} key={index}

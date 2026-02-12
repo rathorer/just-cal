@@ -1,14 +1,16 @@
 import Day from './Day';
 import JustDate from './../utilities/justDate';
 import { invoke } from "@tauri-apps/api/core";
-import { useMemo, useState, useCallback, useEffect } from 'react';
+import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import { useTheme } from './../hooks/useTheme';
 import { event } from '@tauri-apps/api';
 import useWindowWidth from './../hooks/useWindowWidth';
 import RightSection from './RightSection';
+import { Constants } from '../utilities/constants';
 
 
 function Month(props) {
+  const locale = props.locale;
   const [monthDays, setMonthDays] = useState([]);
   const [weekDays, setWeekDays] = useState([]);
   const [monthStart, setMonthStart] = useState(0);
@@ -17,6 +19,9 @@ function Month(props) {
   const [monthItems, setMonthItems] = useState([]);
   const [updatedAgendas, setUpdatedAgendas] = useState([]);
   const [lastAgendaUpdate, setLastAgendaUpdate] = useState(null);
+  const [leftWidth, setLeftWidth] = useState(Constants.LEFT_SECTION_DEFAULT_WIDTH);
+  const [isDragging, setIsDragging] = useState(false);
+  const containerRef = useRef(null);
   const width = useWindowWidth();
 
   const month = JustDate.getMonthIndex(props.month);
@@ -43,7 +48,7 @@ function Month(props) {
   const monthDates = useMemo(() => {
     // If we have month and year defined, initialize with the 1st of the month.
     const currentViewDate = (month > -1) && year ? new Date(year, month, 1) : new Date();
-    const justDate = new JustDate(currentViewDate, 'en-US');
+    const justDate = new JustDate(currentViewDate, locale);
     const rawMonthDates = justDate.getMonthDates();
 
     const weekInfo = justDate.getLocaleWeekInfo();//This gives firstDay 1 based, Monday is 1, ..
@@ -118,18 +123,8 @@ function Month(props) {
   }, [year, month]);
 
   const handleAgendaUpdateByDay = useCallback((date, agenda) => {
-    // let newUpdatedAgendas = [...updatedAgendas];
-    // let possibleItem = newUpdatedAgendas[day - 1];
-    // possibleItem[day] = agenda;
-    // setUpdatedAgendas(newUpdatedAgendas);
-    // let dateAsKey = new JustDate(new Date(year, month, day)).toDateString();
-    // setMonthItems([...monthItems, { dateAsKey: agenda.map(ag => ag.user_input) }]);
     let updateDateKey = JustDate.toISOLikeDateString(date);
     setLastAgendaUpdate({ dateKey: updateDateKey, agenda });
-    //Additional check
-    // if(possibleItem && possibleItem[day]){
-    //   possibleItem ==
-    // }
   }, []);
 
   const isSunday = function (day, index) {
@@ -138,13 +133,42 @@ function Month(props) {
       || (day.toLowerCase === "s" && index === weekDays.indexOf('s')));
     //console.log(isSun);
     return isSun;
-
   }
 
+  //Dragging events:
+  useEffect(() => {
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    const handleMouseMove = (e) => {
+      if (!isDragging || !containerRef.current) return;
+
+      const container = containerRef.current;
+      const containerWidth = container.clientWidth;
+      const newLeftWidth = ((e.clientX - container.getBoundingClientRect().left) / containerWidth) * 100;
+
+      // Enforce min and max widths
+      if (newLeftWidth >= Constants.LEFT_SECTION_MIN_WIDTH 
+          && newLeftWidth <= Constants.LEFT_SECTION_MAX_WIDTH) {
+        setLeftWidth(newLeftWidth);
+      }
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging]);
+
   return (
-    <div className="h-[calc(100vh-3rem)] flex flex-1 overflow-hidden">
-      {/* 2. Bottom Left Section - 80% width */}
-      <div className="w-full lg:w-4/5 bg-base-100 flex flex-col">
+    <div ref={containerRef} className="h-[calc(100vh-3rem)] flex flex-1 overflow-hidden">
+      {/* Left Section - Dynamic width */}
+      <div style={{ width: `${leftWidth}%` }} className="bg-base-100 flex flex-col">
         {/* Optional: Inner header or toolbar */}
         <div className="pl-3 bg-base-100/90 p-2 border-b border-base-100 text-base-content">
           <div className="grid grid-cols-7 flex-row">
@@ -177,14 +201,22 @@ function Month(props) {
           </div>
         </div>
       </div>
-      <RightSection
-        year={year}
-        month={month}
-        monthName={monthName}
-        onAgendaAdd={handleAddAgendaByRightSection}
-        onAgendaEdit={handleEditAgendaByRightSection}
-        selectedDate={selectedDate}
-        lastAgendaUpdate={lastAgendaUpdate} />
+      {/* Draggable Divider */}
+      <div
+        onMouseDown={() => setIsDragging(true)}
+        className={"w-1 bg-base-content/10 hover:bg-base-content/30 transition-colors cursor-col-resize flex-shrink-0 " + (isDragging ? "bg-primary/50" : "")}
+      />
+      {/* Right Section - Dynamic width */}
+      <div style={{ width: `${100 - leftWidth}%` }} className="lg:flex lg:flex-col bg-base-200 border-l border-base-200 p-1">
+          <RightSection
+          year={year}
+          month={month}
+          monthName={monthName}
+          onAgendaAdd={handleAddAgendaByRightSection}
+          onAgendaEdit={handleEditAgendaByRightSection}
+          selectedDate={selectedDate}
+          lastAgendaUpdate={lastAgendaUpdate} />
+      </div>
     </div >
   )
 }

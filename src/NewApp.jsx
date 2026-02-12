@@ -2,11 +2,9 @@ import SettingsIcon from './components/icons/setting'
 import BarsIcon from './components/icons/Bars';
 import ThemeLightIcon from './components/icons/ThemeLight';
 import ThemeDarkIcon from './components/icons/ThemeDark';
-import Day from './components/day';
 import JustDate from './utilities/justDate';
 import { useMemo, useState, useRef } from 'react';
 import { useTheme } from './hooks/useTheme';
-import { event } from '@tauri-apps/api';
 import useWindowWidth from './hooks/useWindowWidth';
 
 function NewApp() {
