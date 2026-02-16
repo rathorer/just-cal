@@ -9,6 +9,7 @@ import JustDate from '../utilities/justDate';
 
 function DayAgenda(props) {
   let selectedDateObj = props.selectedDateObj;
+  let recentRemoved = props.recentRemoved;
   let dayAgendaItems = props.dayItems;
   let monthName = props.monthName;
   const onRemoveItem = props.onRemoveItem;
@@ -25,39 +26,39 @@ function DayAgenda(props) {
 
   const [date, setDate] = useState(selectedDateObj);
   const [items, setItems] = useState(dayAgendaItems[dateAsKey]);
-  //const [recentRemoved, setRecentRemoved] = useState({});
+  //const [recentRemoved, setRecentRemoved] = useState([]);
 
   useEffect(()=> {
     console.log('dayitems: ', dayAgendaItems[dateAsKey]);
     setItems(dayAgendaItems[dateAsKey]);
   },[dayAgendaItems]);
 
-  const handleRemove = function (index, e) {
-    const target = e.currentTarget;
-    console.log(target);
-    if (target && target.attributes.name.value === 'removeItem') {
-      let currentItems = [...items];
-      const [removed] = currentItems.splice(index, 1);
-      setItems(currentItems);
-      //agendaCache.set(dateAsKey, currentItems);
-      setRecentRemoved({dateAsKey: [...recentRemoved[dateAsKey], removed]});
-      onRemoveItem(dateAsKey, index);
-    }
-  };
+  // const handleRemove = function (index, e) {
+  //   const target = e.currentTarget;
+  //   console.log(target);
+  //   if (target && target.attributes.name.value === 'removeItem') {
+  //     let currentItems = [...items];
+  //     const [removed] = currentItems.splice(index, 1);
+  //     setItems(currentItems);
+  //     //agendaCache.set(dateAsKey, currentItems);
+  //     setRecentRemoved([...recentRemoved, removed]);
+  //     //onRemoveItem(dateAsKey, index);
+  //   }
+  // };
 
-  const handleUndo = function (e) {
-    const cloneRecentRemoved = [...recentRemoved[dateAsKey]];
-    const lastRemoved = cloneRecentRemoved.pop();
-    let newCurrentItems = [...items, lastRemoved];
-    setItems(newCurrentItems);
-    setRecentRemoved({dateAsKey: cloneRecentRemoved});
-  };
+  // const handleUndo = function (e) {
+  //   const cloneRecentRemoved = [...recentRemoved];
+  //   const lastRemoved = cloneRecentRemoved.pop();
+  //   let newCurrentItems = [...items, lastRemoved];
+  //   setItems(newCurrentItems);
+  //   setRecentRemoved([...cloneRecentRemoved]);
+  // };
 
   const handleMarkDone = function (index, e) {
-    console.log(index);
-    const currentItems = [...items];
-    currentItems[index].status = currentItems[index].status === "Done" ? "Pending" : "Done";
-    setItems(currentItems);
+    //console.log(index);
+    //const currentItems = [...items];
+    //currentItems[index].status = currentItems[index].status === "Done" ? "Pending" : "Done";
+    //setItems(currentItems);
     //agendaCache.set(dateAsKey, currentItems);
     onMarkingItemDone(dateAsKey, index);
   };
@@ -75,27 +76,28 @@ function DayAgenda(props) {
 
   return (
     <div className="">
-      {/* <div className="text-xl p-2 border-b border-base-100">
+      <div className="text-xl p-2 border-b border-base-100">
         <h3 className="font-semibold text-base-content">{"Agenda: " + monthName + " " + selectedDate + ", " + year}</h3>
-        {recentRemoved[dateAsKey] && recentRemoved[dateAsKey].length > 0 ?
+        {recentRemoved && recentRemoved.length > 0 ?
           <button title="Undo remove"
             className="btn btn-ghost btn-xs rounded text-base-content/70 hover:text-base-content hover:bg-base-300"
-            onClick={handleUndo}>
+            onClick={()=> onUndoRemove(dateAsKey)}>
             <UndoIcon></UndoIcon>
           </button> : <></>}
-      </div> */}
+      </div>
       {console.log(items)}
       {items && items.map((item, i) => (
         <AgendaCard
           key={dateAsKey+i}
           keyId={dateAsKey+i}
           index={i}
-          title={item.title}
+          agendaItem={item}
+          //title={item.title}
           status={item.status}
-          description={item.description}
+          //description={item.description}
           onItemUpdate={(index, patch) => onAgendaEdit?.(dateAsKey, index, patch)}
           onCheckClick={handleMarkDone}
-          onRemoveClick={handleRemove} />
+          onRemoveClick={(index)=> onRemoveItem(dateAsKey, index)} />
       ))}
     </div>
   )

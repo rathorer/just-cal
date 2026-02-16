@@ -19,9 +19,9 @@ const MoreActions = ({
         tabIndex={0}
         className="dropdown-content menu menu-sm bg-base-100 shadow-lg border border-base-300 rounded-md w-48 z-[100]"
       >
-        {actions.map((action)=> 
-          <li>
-            <button onClick={(e)=> action[1](key, e)}>
+        {actions.map((action, idx)=> 
+          <li key={idx}>
+            <button onClick={(e)=> action[1](e, idx)}>
               {action[0]}
             </button>
           </li>

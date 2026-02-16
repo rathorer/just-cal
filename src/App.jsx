@@ -41,6 +41,7 @@ function App() {
   }, []);
 
   useEffect(() => {
+
     async function updateBackendStore(date) {
       let utcDateStr = date.toISOString();
       try {
@@ -219,7 +220,7 @@ function App() {
       <div className="flex flex-1 overflow-hidden">
         {
           currentView == VIEW_TYPE.Month ?
-            <Month key={`${year}-${monthIndex}`} date={dayDate} month={monthIndex} year={year} />
+            <Month date={dayDate} month={monthIndex} year={year} />
             :
             <Year key={`${year}`} year={year} locale={userLocale} onMonthClick={handleMonthSelection} />
         }

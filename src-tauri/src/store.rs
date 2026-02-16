@@ -83,14 +83,22 @@ pub fn get_store_manager<R: Runtime>(app: &tauri::AppHandle<R>) -> State<'_, Sto
     return app.state::<StoreManager<R>>().clone();
 }
 
-pub fn get_store_from_app_state<R: Runtime>(app: &tauri::AppHandle<R>, date: &str) -> Result<Arc<Store<R>>, String> {
+pub fn get_or_reload_store<R: Runtime>(app: &tauri::AppHandle<R>, date: &str) -> Result<Arc<Store<R>>, String> {
     let store_manager = get_store_manager(app);
     let month_key = date_to_store_filename(date).split('.').next().unwrap_or("current").to_string();
     let stores_lock = store_manager.stores.read().unwrap();
     if let Some(store) = stores_lock.get(&month_key) {
         Ok(store.clone())
     } else {
-        Err("Store for the month not found".to_string())
+        drop(stores_lock);
+        // Fallback 1: Try to reload store from disk
+        match reload_store_from_disk(app, date.to_string()) {
+            Ok(store) => Ok(store),
+            Err(_) => {
+                // Fallback 2: Create a new empty store
+                setup_new_store(app, date)
+            }
+        }
     }
 }
 

@@ -117,6 +117,10 @@
   background-repeat: no-repeat;
   background-size: contain;
 }
+
+[contenteditable]{
+  white-space: pre-wrap;
+}
 [contenteditable]:focus {
   outline: 1px solid #422ad5;
 }

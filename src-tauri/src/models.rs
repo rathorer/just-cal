@@ -31,7 +31,7 @@ impl TryFrom<u8> for ItemState {
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct Item {
-    id: u32,
+    pub id: u32,
     pub user_input: String,
     title: String,
     description: String,

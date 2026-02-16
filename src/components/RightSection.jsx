@@ -13,6 +13,7 @@ function RightSection(props) {
   const monthName = props.monthName;
   const handleAgendaAddParent = props.onAgendaAdd;
   const handleAgendaEditParent = props.onAgendaEdit;
+  const handleAgendaRemoveParent = props.onAgendaRemove;
   const lastAgendaUpdate = props.lastAgendaUpdate;
   let selectedDate = props.selectedDate;
   let dateObj = new Date(year, month, selectedDate);
@@ -21,7 +22,7 @@ function RightSection(props) {
   //const [currentDate, setCurrentDate] = useState(selectedDate);
   const [date, setDate] = useState(dateObj);
   const [items, setItems] = useState({ [dateAsKey]: [] });
-  const [recentRemoved, setRecentRemoved] = useState({ dateAsKey: [] });
+  const [recentRemoved, setRecentRemoved] = useState({ [dateAsKey]: [] });
   //const agendaCache = useCache(cacheTTL);
   const saveTimerRef = useRef(null);
 
@@ -40,12 +41,16 @@ function RightSection(props) {
           //let agenda = agendaCache.get(dateAsKey);
           //if(!agenda){
           let jsonDate = date.toISOString();
-          console.log('calling get_items_for_date.', jsonDate);
-          const dayItems = await invoke("get_items_for_date", { date: jsonDate });
-          console.log("Fetched selected day items:", dayItems);
-
           let selectedDateAsKey = JustDate.toISOLikeDateString(date);
-          setItems({ ...items, [selectedDateAsKey]: dayItems });
+          //Only fetch if it was not already fetched.
+          if (!items[selectedDateAsKey]) {
+
+            console.log('calling get_items_for_date.', jsonDate);
+            const dayItems = await invoke("get_items_for_date", { date: jsonDate });
+            console.log("Fetched selected day items:", dayItems);
+
+            setItems({ ...items, [selectedDateAsKey]: dayItems });
+          }
           //agendaCache.set(dateAsKey, dayItems);
           // } else{
           //   setItems(agenda);
@@ -93,11 +98,52 @@ function RightSection(props) {
     //   mergeCurrentAndUpdatedAgendas(items[selectedDateKey] || [], lastAgendaUpdate.agenda);
     setItems((prevItems) => {
       const currentItems = prevItems[selectedDateKey] || [];
-      return { ...prevItems, 
-        [selectedDateKey]: mergeCurrentAndUpdatedAgendas(currentItems, lastAgendaUpdate.agenda) };
+      return {
+        ...prevItems,
+        [selectedDateKey]: mergeCurrentAndUpdatedAgendas(currentItems, lastAgendaUpdate.agenda)
+      };
     });
     //setItems({...items, [selectedDateKey]: mergedAgenda});
   }, [lastAgendaUpdate, date]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (recentRemoved[dateAsKey] && recentRemoved[dateAsKey].length > 0) {
+        console.log('checking to delete removed items');
+        const now = Date.now();
+        const expired = recentRemoved[dateAsKey].filter(
+          r => r.expiresAt <= now
+        );
+        if (expired.length == 0) { return; }
+        expired.forEach(async (removedItem) => {
+          let jsonDate = date.toISOString();
+          const agendaItem = removedItem.item;
+          try {
+            console.log('calling get_items_for_date.', agendaItem);
+            await invoke("delete_single_item_of_date", { date: jsonDate, item: agendaItem });
+            console.log("Removed item from db", agendaItem);
+          } catch (error) {
+            console.error("Failed to fetch selected day items:", error);
+          }
+        });
+        setRecentRemoved(recentRemoved[dateAsKey].filter(
+          r => r.expiresAt > now
+        ));
+      }
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [dateAsKey, recentRemoved.length]);
+
+  const updateItemToBackend = async function (agendaItem) {
+    try {
+      let jsonDate = date.toISOString();
+      console.log('calling get_items_for_date.', agendaItem);
+      await invoke("update_single_item_of_date", { date: jsonDate, item: agendaItem });
+      console.log("Removed item from db", agendaItem);
+    } catch (error) {
+      console.error("Failed to update item.", error);
+    }
+  }
 
   function convertUserInputToAgenda(currentDate, userInput) {
     if (!userInput || userInput.trim() === "") {
@@ -134,34 +180,34 @@ function RightSection(props) {
   }
 
   const handleRemove = function (dateKey, index, e) {
-    //const target = e.currentTarget;
-    //console.log(target);
-    //if (target && target.attributes.name.value === 'removeItem') {
     let currentItems = [...items[dateKey]];
-    const [removed] = currentItems.splice(index, 1);
-    setItems({ ...items, dateKey: currentItems });
-    //agendaCache.set(dateAsKey, currentItems);
-    let currentRecentRemoved = [...recentRemoved[dateKey]];
+    const [removedItem] = currentItems.splice(index, 1);
+    const removed = { item: removedItem, index: index, expiresAt: Date.now() + Constants.UNDO_DURATION_MS };
+
+    setItems({ ...items, [dateKey]: currentItems });
+    const currentRecentRemoved = recentRemoved[dateKey] ? [...recentRemoved[dateAsKey]] : [];
     currentRecentRemoved.push(removed);
-    setRecentRemoved({ ...recentRemoved, dateKey: currentRecentRemoved });
-    //}
+    setRecentRemoved({ ...recentRemoved, [dateKey]: currentRecentRemoved });
+    handleAgendaRemoveParent(dateKey, index);
   };
 
   const handleUndo = function (dateKey, e) {
     const cloneRecentRemoved = [...recentRemoved[dateKey]];
     const lastRemoved = cloneRecentRemoved.pop();
-    let newCurrentItems = [...items[dateKey], lastRemoved];
-    setItems({ ...items, dateKey: newCurrentItems });
-    setRecentRemoved({ ...recentRemoved, dateKey: cloneRecentRemoved });
+    const newItems = items[dateKey] ? [...items[dateKey]] : [];
+    newItems.splice(lastRemoved.index, 0, lastRemoved.item);
+    setItems({ ...items, [dateKey]: newItems });
+    setRecentRemoved({ ...recentRemoved, [dateKey]: cloneRecentRemoved });
     //agendaCache.set(dateAsKey, newCurrentItems);
+    handleAgendaAddParent(selectedDate, lastRemoved.item, lastRemoved.index);
   };
 
   const handleMarkDone = function (dateKey, index, e) {
-    console.log(dateKey, index);
+    console.log('marking done', dateKey, index);
     const currentItems = [...items[dateKey]];
     currentItems[index].status = currentItems[index].status === "Done" ? "Pending" : "Done";
     setItems({ ...items, dateKey: currentItems });
-    //agendaCache.set(dateAsKey, currentItems);
+    updateItemToBackend(currentItems[index]);
   };
 
   const handleAgendaEdit = function (dateKey, index, patch) {
@@ -257,7 +303,7 @@ function RightSection(props) {
 
   return (
     <div className="lg:block bg-base-100/90 border-l border-base-200 text-base-content max-h-full overflow-y-auto">
-      <div className="text-xl p-2 border-b border-base-100">
+      {/* <div className="text-xl p-2 border-b border-base-100">
         <h3 className="font-semibold text-base-content">{"Agenda: " + monthName + " " + selectedDate + ", " + year}</h3>
         {recentRemoved[dateAsKey] && recentRemoved[dateAsKey].length > 0 ?
           <button title="Undo remove"
@@ -265,8 +311,12 @@ function RightSection(props) {
             onClick={handleUndo}>
             <UndoIcon></UndoIcon>
           </button> : <></>}
-      </div>
-      <DayAgenda key={dateAsKey} selectedDateObj={dateObj} monthName={monthName} dayItems={items}
+      </div> */}
+      <DayAgenda key={dateAsKey}
+        selectedDateObj={dateObj}
+        monthName={monthName}
+        dayItems={items}
+        recentRemoved={recentRemoved[dateAsKey]}
         onRemoveItem={handleRemove}
         onUndoRemove={handleUndo}
         onAgendaUpdate={handleAgendaAddParent}
@@ -354,19 +404,19 @@ function RightSection(props) {
           </div>
         ))} */}
         {/* <div className="card bg-base-100 shadow-sm"> */}
-          <div className="card-body p-4">
-            <h4 className="card-title text-md">New agenda item:</h4>
-            {/* <input type="text"
+        <div className="card-body p-4">
+          <h4 className="card-title text-md">New agenda item:</h4>
+          {/* <input type="text"
               className="input input-primary text-md input-md w-full max-w-xs bg-base-100 focus:outline-none focus:border-primary/70 focus:border-2"
               placeholder="Add new item for this day.."></input> */}
-            <textarea className="textarea w-auto textarea-ghost textarea-lg textarea-primary focus:outline-none focus:border-primary/70 focus:border-2"
-              placeholder="Add new item for this day.."
-              onInput={handleOnInput}
-              onBlur={handleOnBlur}
-              onKeyDown={handleKeyDown}>
-            </textarea>
-          </div>
+          <textarea className="textarea w-auto textarea-ghost textarea-lg textarea-primary focus:outline-none focus:border-primary/70 focus:border-2"
+            placeholder="Add new item for this day.."
+            onInput={handleOnInput}
+            onBlur={handleOnBlur}
+            onKeyDown={handleKeyDown}>
+          </textarea>
         </div>
+      </div>
       {/* </div> */}
     </div>
   )

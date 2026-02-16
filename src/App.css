@@ -138,3 +138,17 @@ button {
      background-color: #0f0f0f69; 
   }
 } */
+
+/* Smooth month transition animations */
+.month-grid {
+  transition: opacity 0.6s ease-in-out;
+}
+
+.month-grid.loading {
+  opacity: 1.6;
+  pointer-events: none;
+}
+
+.month-day {
+  transition: background-color 0.15s ease-in-out;
+}

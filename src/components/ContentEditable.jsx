@@ -88,10 +88,6 @@ export const ContentEditable = ({
   )
 }
 
-
-
-
-
 const Editable = ({
   key,
   value = "",

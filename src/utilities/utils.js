@@ -258,6 +258,19 @@ export function to12Hour(hour24) {
 export function to24Hour(hour) {
 
 }
+function isSafeHref(href) {
+  try {
+    // Handle relative URLs safely
+    const url = new URL(href, window.location.origin);
+
+    return (
+      url.protocol === "https:" ||
+      url.protocol === "http:"
+    );
+  } catch {
+    return false;
+  }
+}
 
 export function sanitizeHTML(html,
   allowedTags = Constants.DEFAULT_ALLOWED_TAGS,
@@ -276,7 +289,12 @@ export function sanitizeHTML(html,
         node.replaceWith(...node.childNodes);
         return;
       }
-
+      if (tag === 'a' && attr.name === 'href') {
+        if (!/^(https?:|mailto:|tel:)/i.test(attr.value)
+          || !isSafeHref(attr.value)) {
+          node.removeAttribute('href');
+        }
+      }
       // Remove disallowed attributes
       [...node.attributes].forEach(attr => {
         const defaultAllowed = allowedAttributes.default;
@@ -314,4 +332,37 @@ export function toISOTimeString(hours, minutes, seconds, meridiem) {
   return 'T' + dateObj.toISOString().split('T')[1];
 }
 
-export {memoize};
+/**
+ * Safely decode HTML entities to plain text
+ * Converts &lt; to <, &gt; to >, &amp; to &, etc.
+ * @param {string} html - HTML string with entities
+ * @returns {string} Plain text without HTML entities
+ */
+export function decodeHTMLEntities(html) {
+  if (!html) return "";
+
+  const textarea = document.createElement('textarea');
+  textarea.innerHTML = html;
+  return textarea.value;
+}
+
+/**
+ * Extract plain text safely from HTML content
+ * Handles both actual HTML tags and encoded HTML entities
+ * This prevents displaying &lt; as literal text in the UI
+ * @param {string} html - HTML string (may contain encoded entities)
+ * @returns {string} Plain text content
+ */
+export function extractPlainText(html) {
+  if (!html) return "";
+
+  // First, decode any HTML entities
+  const decoded = decodeHTMLEntities(html);
+
+  //todo: remove regex, and use sanitize html to remove unallowed nodes.
+  const plainText = decoded.replace(/<[^>]*>/g, "").trim();
+
+  return plainText;
+}
+
+export { memoize };

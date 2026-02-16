@@ -6,7 +6,7 @@ mod storage_repo;
 mod store;
 mod models;
 
-use crate::store::{add_store_to_app_state, setup_new_store, get_store_from_app_state};
+use crate::store::{add_store_to_app_state, setup_new_store, get_or_reload_store};
 
 
 #[derive(Serialize, Debug, Clone)]
@@ -48,21 +48,14 @@ struct DayItem {
 fn update_store(date: String, app: AppHandle<Wry>) {
     println!("Updating store for date: {}", date);
     
-    // Try to get store from AppState (storeManager)
-    let date_store_in_state = store::get_store_from_app_state(&app, &date);
-    
-    // If store not in AppState, load it from disk and add to AppState
-    if date_store_in_state.is_err() {
-        match store::setup_new_store(&app, &date) {
-            Ok(_store) => {
-                println!("Store loaded from disk and added to AppState for date: {}", date);
-            },
-            Err(e) => {
-                println!("Error loading store from disk for date {}: {}", date, e);
-            }
+    // Get store from AppState, with automatic fallback to disk and creation of new store if needed
+    match get_or_reload_store(&app, &date) {
+        Ok(_store) => {
+            println!("Store loaded successfully for date: {}", date);
+        },
+        Err(e) => {
+            println!("Error loading store for date {}: {}", date, e);
         }
-    } else {
-        println!("Store already exists in AppState for date: {}", date);
     }
 }
 
@@ -146,6 +139,8 @@ pub fn run() {
             storage_repo::get_items_for_date,
             storage_repo::get_items_for_month,
             storage_repo::save_items_for_date,
+            storage_repo::delete_single_item_of_date,
+            storage_repo::update_single_item_of_date,
             storage_repo::delete_items_for_date])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

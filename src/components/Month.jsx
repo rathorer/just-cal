@@ -16,15 +16,17 @@ function Month(props) {
   const [monthStart, setMonthStart] = useState(0);
   const [monthName, setMonthName] = useState();
   const [selectedDate, setSelectedDate] = useState(props.date);
-  const [monthItems, setMonthItems] = useState([]);
+  const [monthItems, setMonthItems] = useState({});
   const [updatedAgendas, setUpdatedAgendas] = useState([]);
   const [lastAgendaUpdate, setLastAgendaUpdate] = useState(null);
   const [leftWidth, setLeftWidth] = useState(Constants.LEFT_SECTION_DEFAULT_WIDTH);
   const [isDragging, setIsDragging] = useState(false);
+  const [isLoadingItems, setIsLoadingItems] = useState(false);
   const containerRef = useRef(null);
   const width = useWindowWidth();
 
   const month = JustDate.getMonthIndex(props.month);
+  console.log('month', month, 'prop-month', props.month);
   const year = props.year;
   //setSelectedDate(props.date);
 
@@ -87,27 +89,50 @@ function Month(props) {
 
   useEffect(() => {
     async function fetchMonthItems(date) {
+      setIsLoadingItems(true);
       let utcDateStr = date.toISOString();
-      let items = await invoke("get_items_for_month", { date: utcDateStr });
-      if (items && items.length) {
-        let itemsAsObj = Object.fromEntries(items);
-        console.log('get_items_for_month', itemsAsObj);
-        setMonthItems(itemsAsObj);
-      } else {
-        setMonthItems({});
+      try {
+        console.log('fetching items for month', utcDateStr);
+        let items = await invoke("get_items_for_month", { date: utcDateStr });
+        if (items && items.length) {
+          let itemsAsObj = Object.fromEntries(items);
+          console.log('get_items_for_month', itemsAsObj);
+          setMonthItems(itemsAsObj);
+        } else {
+          setMonthItems({});
+        }
+      } finally {
+        setIsLoadingItems(false);
       }
     }
     let date = new Date(year, month, selectedDate);
     fetchMonthItems(date);
   }, [year, month]);
 
-  const handleAddAgendaByRightSection = useCallback((day, agenda) => {
+  const handleRemoveAgendaByRightSection = useCallback((dateKey, index) => {
+    //This will be called via right section, when user updates Day using right section.
+    //let dateAsKey = JustDate.toISOLikeDateString(new Date(year, month, day));
+
+    setMonthItems((currItems) => {
+      const prevItems = currItems[dateKey] || [];
+      const newItems = [...prevItems];
+      newItems.splice(index, 1);
+      return { ...currItems, [dateKey]: newItems };
+    });
+  }, [year, month]);
+  const handleAddAgendaByRightSection = useCallback((day, agenda, index = undefined) => {
     //This will be called via right section, when user updates Day using right section.
     let dateAsKey = JustDate.toISOLikeDateString(new Date(year, month, day));
 
     setMonthItems((currItems) => {
       const prevItems = currItems[dateAsKey] || [];
-      const newItems = [...prevItems, agenda.user_input];
+      let newItems; 
+      if(index === undefined){
+        newItems = [...prevItems, agenda.user_input];
+      } else{
+        newItems = [...prevItems];
+        newItems.splice(index, 0, agenda.user_input);
+      }
       return { ...currItems, [dateAsKey]: newItems };
     });
   }, [year, month]);
@@ -115,7 +140,7 @@ function Month(props) {
   const handleEditAgendaByRightSection = useCallback((dateKey, index, updatedAgenda) => {
     //This will be called via right section, when user updates Day using right section.
     setMonthItems((currItems) => {
-      const prevItems = currItems[dateKey] || []; 
+      const prevItems = currItems[dateKey] || [];
       const newItems = [...prevItems];
       newItems[index] = updatedAgenda.user_input;
       return { ...currItems, [dateKey]: newItems };
@@ -149,8 +174,8 @@ function Month(props) {
       const newLeftWidth = ((e.clientX - container.getBoundingClientRect().left) / containerWidth) * 100;
 
       // Enforce min and max widths
-      if (newLeftWidth >= Constants.LEFT_SECTION_MIN_WIDTH 
-          && newLeftWidth <= Constants.LEFT_SECTION_MAX_WIDTH) {
+      if (newLeftWidth >= Constants.LEFT_SECTION_MIN_WIDTH
+        && newLeftWidth <= Constants.LEFT_SECTION_MAX_WIDTH) {
         setLeftWidth(newLeftWidth);
       }
     };
@@ -179,7 +204,7 @@ function Month(props) {
         </div>
         <div className="flex-1 p-2 pt-0 overflow-y-auto">
           <div className="prose max-w-none">
-            <div className="grid grid-cols-7 divide-x divide-y divide-base-content/30 text-base-content/90 border border-base-content/30">
+            <div className={`grid grid-cols-7 divide-x divide-y divide-base-content/30 text-base-content/90 border border-base-content/30 month-grid ${isLoadingItems ? 'loading' : ''}`}>
               {monthDates.map((date, idx) => {
                 if (date) {
                   let dateKey = JustDate.toISOLikeDateString(date);
@@ -208,12 +233,13 @@ function Month(props) {
       />
       {/* Right Section - Dynamic width */}
       <div style={{ width: `${100 - leftWidth}%` }} className="lg:flex lg:flex-col bg-base-200 border-l border-base-200 p-1">
-          <RightSection
+        <RightSection
           year={year}
           month={month}
           monthName={monthName}
           onAgendaAdd={handleAddAgendaByRightSection}
           onAgendaEdit={handleEditAgendaByRightSection}
+          onAgendaRemove={handleRemoveAgendaByRightSection}
           selectedDate={selectedDate}
           lastAgendaUpdate={lastAgendaUpdate} />
       </div>

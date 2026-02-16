@@ -9,7 +9,9 @@ export const Constants = Object.freeze({
     LEFT_SECTION_DEFAULT_WIDTH: 80, //%
     LEFT_SECTION_MIN_WIDTH: 50, //%
     LEFT_SECTION_MAX_WIDTH: 90, //%
+    UNDO_DURATION_MS: 20000,//in milliseconds
     SENTENCE_DETECTION: /^[^.?!]+[.?!]/,
+    TIME_FORMAT: "short",//"full", "long", "medium", "short"
     REMINDER_INTENT_REGEX:
         /\b(remind(?:\s+me)?|reminder|notify(?:\s+me)?|alert(?:\s+me)?|let\s+me\s+know|ping|buzz\s+me|give\s+me\s+(?:a\s+)?heads?\s+up|drop\s+me\s+(?:a\s+)?reminder|send\s+me\s+(?:a\s+)?notification|(?:set|add|put|keep)\s+(?:a|an|the)?\s*(?:note|reminder|alarm|notification))\b/,
     TIME_BARE_NUMBER_REGEX: /\b([1-9]|1[0-9]|2[0-3])\b/,
