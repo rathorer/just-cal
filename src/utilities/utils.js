@@ -58,7 +58,7 @@ export function parseReminder(inputText) {
     return { isReminder: true, time: null, confidence: 0.9 };
   }
   let confidence = 0.7;
-  if (match.index === matchNearByWords.index) {
+  if (match && matchNearByWords && match.index === matchNearByWords.index) {
     confidence = 0.95;
   }
   let hour = parseInt(match.groups.hour, 10);
@@ -75,14 +75,11 @@ export function parseReminder(inputText) {
     if (/\b(morning)\b/.test(text)) meridiem = "am";
   }
 
-  // Convert 24h to 12h if needed
-  if (!meridiem && hour >= 13) {
-    hour -= 12;
-    meridiem = "pm";
-  }
+  // Convert 12h to 24h if needed
+  hour = to24Hour(hour, meridiem);
 
   // Final validation
-  if (hour < 1 || hour > 12 || minute < 0 || minute > 59) {
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
     console.warn('Reminder detected, but not a valid time.');
     return { isReminder: true, time: null };
   }
@@ -255,8 +252,17 @@ export function to12Hour(hour24) {
   return { hour12, meridiem };
 };
 
-export function to24Hour(hour) {
-
+export function to24Hour(hour, meridiem) {
+    let h24 = parseInt(hour, 10);
+    if (meridiem.toUpperCase() === 'PM' && h24 !== 12) {
+        h24 += 12;
+    }
+    if (meridiem.toUpperCase() === 'AM' && h24 === 12) {
+        h24 = 0;
+    }
+    // const formattedHour = h.toString().padStart(2, '0');
+    // const formattedMinutes = m.toString().padStart(2, '0');
+  return h24;
 }
 function isSafeHref(href) {
   try {

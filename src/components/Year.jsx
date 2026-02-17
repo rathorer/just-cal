@@ -11,16 +11,10 @@ import { locale } from '@tauri-apps/plugin-os';
 
 function Year(props) {
     const year = props.year;
+    const prevSelectedMonth = props.month;
     const locale = props.locale;
     const handleMonthSelection = props.onMonthClick;
-    const [monthDays, setMonthDays] = useState([]);
-    const [weekDays, setWeekDays] = useState([]);
-    const [monthStart, setMonthStart] = useState(0);
-    const [monthName, setMonthName] = useState();
     const [selectedDate, setSelectedDate] = useState(props.date);
-    const [monthItems, setMonthItems] = useState([]);
-    const [updatedAgendas, setUpdatedAgendas] = useState([]);
-    const [lastAgendaUpdate, setLastAgendaUpdate] = useState(null);
     const [leftWidth, setLeftWidth] = useState(Constants.LEFT_SECTION_DEFAULT_WIDTH);
     const [isDragging, setIsDragging] = useState(false);
     const [months, setMonths] = useState([]);
@@ -86,12 +80,15 @@ function Year(props) {
             {/* Left Section - Dynamic width */}
             <div style={{ width: `${leftWidth}%` }} className="bg-base-100 flex flex-col">
                 <div className="flex-1 p-2 pt-0 overflow-y-auto">
-                    <div className="grid grid-cols-3 divide-x divide-y divide-base-content/30 text-base-content/90 border border-base-content/30">
+                    <div
+                        style={{ height: '100%', gridAutoRows: '1fr' }}
+                        className="grid grid-cols-3 divide-x divide-y divide-base-content/30 text-base-content/90 border border-base-content/30"
+                    >
                         {months.map((month, idx) => {
                             return <div 
                                 key={idx} 
                                 onClick={() => handleMonthClick(idx)}
-                                className="p-4 h-56 flex items-center justify-center font-semibold text-center hover:bg-base-200 hover:cursor-pointer transition-colors"
+                                className="p-4 flex items-center justify-center font-semibold text-center hover:bg-base-200 hover:cursor-pointer transition-colors"
                             >{month}</div>
                         })}
                     </div>

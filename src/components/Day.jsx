@@ -16,7 +16,7 @@ function Day(props) {
   let existingItems = props.items || [];
   let handleAgendaUpdateToParent = props.onAgendaUpdate;
   //const onDayItemUpdate = 
-  console.log('existingItems '+ date.getDate(), existingItems);
+  console.log('existingItems ' + date.getDate(), existingItems);
   // const [date, setDate] = useState(currentDate);
   //const [tasks, setTasks] = useState(props.items || []);
   const tasksRef = useRef(existingItems);
@@ -45,7 +45,7 @@ function Day(props) {
 
   function prepareItems(items) {
     //let selectedDateObj = new JustDate(currentDate);
-    items = items.filter(x=> x);
+    items = items.filter(x => x);
     return items.map((item, i) => {
       let extractedTimes = getReminder(item);
       let reminderTime = extractedTimes.reminder;
@@ -332,7 +332,7 @@ function Day(props) {
     }
     //Get all items and update;
     if (ul) {
-      if(isDirty){
+      if (isDirty) {
         handleSave(ul);
       }
     }
@@ -342,7 +342,7 @@ function Day(props) {
     <div key={index}
       className={"p-0 h-42 flex flex-col hover:cursor-text"
         + (date && date.getDate() === selectedDate ? " border-1 !border-info/80" : "")
-        + (index >= 28 ? "border-r border-base-content/20" : "")}//this is to avoid right border
+        + (index >= 28 ? "border-1 border-r border-base-content/20" : "")}//this is to avoid right border
     //  missing in last div, 28 index tells the last line has items.
     >
       {date && (<>

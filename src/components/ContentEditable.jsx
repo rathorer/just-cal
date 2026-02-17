@@ -1,17 +1,30 @@
-import { useEffect, useRef, useCallback } from "react"
+import { useEffect, useRef, useCallback, forwardRef } from "react"
 import { Constants } from "../utilities/constants"
 import { sanitizeHTML } from "../utilities/utils"
 import { renderToStaticMarkup } from "react-dom/server"
 
-export const ContentEditable = ({
+export const ContentEditable = forwardRef(({
   children,
   initialHTML = "",
   onChange,
   onBlur
-}) => {
+}, externalRef) => {
 
   const ref = useRef(null);
+  const editorRef = useRef();
   const isFocused = useRef(false);
+  const lastHtml = useRef("");
+  
+  // Forward the internal ref to the parent
+  useEffect(() => {
+    if (externalRef) {
+      if (typeof externalRef === 'function') {
+        externalRef(ref.current);
+      } else {
+        externalRef.current = ref.current;
+      }
+    }
+  }, [externalRef]);
   
   useEffect(() => {
     if (!ref.current || isFocused.current) {
@@ -54,40 +67,44 @@ export const ContentEditable = ({
     const text = e.clipboardData.getData("text/plain")
     //document.execCommand("insertText", false, text)
     insertTextAtCursor(text);
-  }
+    onChange(text);
+  };
 
-  const handleBlur = () => {
-    console.log('in on blur', editorRef.current.innerHTML);
+  const handleInput = (e) => {
+    //debounce and then call parent
+    //onChange.(sanitizeHTML(ref.current.innerHTML))}
+  };
+
+  const handleBlur = (e) => {
+    console.log('in on blur', ref.current.innerText);
+    isFocused.current = false;
     const sanitized = sanitizeHTML(
-      editorRef.current.innerHTML,
-      allowedTags,
-      allowedAttributes
+      ref.current.innerHTML
     )
-    editorRef.current.innerHTML = sanitized
-    lastHtml.current = sanitized
+    ref.current.innerHTML = sanitized
+    //lastHtml.current = sanitized
     onBlur?.(sanitized)
-  }
-
+  };
 
   return (
     <div
       ref={ref}
       contentEditable
       suppressContentEditableWarning
+      data-placeholder="Add description here.." 
       onPaste={handlePaste}
       onInput={() => onChange?.(sanitizeHTML(ref.current.innerHTML))}
       onFocus={() => {
         isFocused.current = true;
       }}
-      onBlur={() => {
-        isFocused.current = false;
-        ref.current.innerHTML = sanitizeHTML(ref.current.innerHTML)
-        onBlur?.(ref.current.innerHTML)
-      }}
+      onBlur={() => handleBlur()}
     />
   )
-}
+})
 
+ContentEditable.displayName = 'ContentEditable'
+
+/* not being used.
 const Editable = ({
   key,
   value = "",
@@ -152,11 +169,11 @@ const Editable = ({
   const handleBlur = () => {
     console.log('in on blur', editorRef.current.innerHTML);
     const sanitized = sanitizeHTML(
-      editorRef.current.innerHTML,
+      editorRef.current.innerText,
       allowedTags,
       allowedAttributes
     )
-    editorRef.current.innerHTML = sanitized
+    editorRef.current.innerText = sanitized
     lastHtml.current = sanitized
     onBlur?.(sanitized)
   }
@@ -181,3 +198,4 @@ const Editable = ({
 }
 
 export default Editable;
+*/

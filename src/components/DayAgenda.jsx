@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { invoke } from "@tauri-apps/api/core";
 import CheckIcon from './icons/check';
 import UndoIcon from './icons/Undo';
-import Editable, { ContentEditable } from './ContentEditable';
 import AgendaCard from './AgendaCard';
 import useCache from '../hooks/useCache';
 import JustDate from '../utilities/justDate';

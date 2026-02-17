@@ -1,9 +1,22 @@
+import { useRef } from 'react';
+
 const MoreActions = ({
   actions
 }) => {
+  const buttonRef = useRef(null);
+
+  const handleActionClick = (e, callback, idx) => {
+    callback(e, idx);
+    // Close dropdown by clicking the button
+    if (buttonRef.current) {
+      buttonRef.current.click();
+    }
+  };
+
   return (
     <div className="dropdown dropdown-end">
       <button
+        ref={buttonRef}
         title="More actions"
         className="btn btn-ghost btn-xs px-1 min-w-0 text-base-content/70 hover:text-base-content"
         aria-label="More options"
@@ -21,7 +34,7 @@ const MoreActions = ({
       >
         {actions.map((action, idx)=> 
           <li key={idx}>
-            <button onClick={(e)=> action[1](e, idx)}>
+            <button onClick={(e)=> handleActionClick(e, action[1], idx)}>
               {action[0]}
             </button>
           </li>

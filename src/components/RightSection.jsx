@@ -137,9 +137,9 @@ function RightSection(props) {
   const updateItemToBackend = async function (agendaItem) {
     try {
       let jsonDate = date.toISOString();
-      console.log('calling get_items_for_date.', agendaItem);
+      console.log('calling update_single_item_of_date.', agendaItem);
       await invoke("update_single_item_of_date", { date: jsonDate, item: agendaItem });
-      console.log("Removed item from db", agendaItem);
+      console.log("Update item from db", agendaItem);
     } catch (error) {
       console.error("Failed to update item.", error);
     }
@@ -211,20 +211,18 @@ function RightSection(props) {
   };
 
   const handleAgendaEdit = function (dateKey, index, patch) {
-    setItems((prevItems) => {
-      const currentItems = prevItems[dateKey] || [];
-      const existingItem = currentItems[index];
-      if (!existingItem) {
-        return prevItems;
-      }
-      const newItems = [...currentItems];
-      let updatedItem = { ...existingItem, ...patch };
-      newItems[index] = updatedItem
-      let updatedItems = { ...prevItems, [dateKey]: newItems };
-      handleAgendaEditParent(dateKey, index, updatedItem);//TODO: derive date from dateKey.
-      return updatedItems;
-    });
-  };
+    let prevItems = { ...items };
+    const selectedAgendaItems = prevItems[dateKey] || [];
+    const existingItem = selectedAgendaItems[index];
+    if (existingItem) {
+      const newItem = { ...existingItem, ...patch };
+      const newItems = [...selectedAgendaItems];
+      newItems[index] = newItem;
+      handleAgendaEditParent(dateKey, index, newItem);
+      setItems({ ...prevItems, [dateKey]: newItems });
+      updateItemToBackend(newItem);
+    };
+  }
 
   const handleNewAgendaItem = function (userInput) {
     console.log('adding new agenda currentdate:', date);

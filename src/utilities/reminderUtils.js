@@ -11,7 +11,7 @@ function getReminderPlain(text) {
     let reminder = parseReminder(text);
     let reminderTime, eventTime = null;
     if (reminder.isReminder) {
-        reminderTime = reminder.time;
+        reminderTime = reminder.time || Constants.DEFAULT_REMIND_TIME;
     } else {
         let extractedTime = extractTime(text);
         if (extractedTime && extractedTime.confidence > 0.6) {

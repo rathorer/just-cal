@@ -10,6 +10,7 @@ export const Constants = Object.freeze({
     LEFT_SECTION_MIN_WIDTH: 50, //%
     LEFT_SECTION_MAX_WIDTH: 90, //%
     UNDO_DURATION_MS: 20000,//in milliseconds
+    REMINDER_TIME_PRECISION: 15,//in minutes
     SENTENCE_DETECTION: /^[^.?!]+[.?!]/,
     TIME_FORMAT: "short",//"full", "long", "medium", "short"
     REMINDER_INTENT_REGEX:
