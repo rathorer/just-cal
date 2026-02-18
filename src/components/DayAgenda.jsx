@@ -28,7 +28,7 @@ function DayAgenda(props) {
   //const [recentRemoved, setRecentRemoved] = useState([]);
 
   useEffect(()=> {
-    console.log('dayitems: ', dayAgendaItems[dateAsKey]);
+    //console.log('dayitems: ', dayAgendaItems[dateAsKey]);
     setItems(dayAgendaItems[dateAsKey]);
   },[dayAgendaItems]);
 
@@ -84,7 +84,6 @@ function DayAgenda(props) {
             <UndoIcon></UndoIcon>
           </button> : <></>}
       </div>
-      {console.log(items)}
       {items && items.map((item, i) => (
         <AgendaCard
           key={dateAsKey+i}

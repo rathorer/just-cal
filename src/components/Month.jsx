@@ -64,7 +64,6 @@ function Month(props) {
     const monthDays = justDate.getDayNumbersInMonth();
     const dayNameFormat = width > 700 ? 'long' : width > 300 ? 'short' : 'narrow';
     const weekDays = justDate.getLocalizedWeekdays(dayNameFormat);
-    console.log('weekdays:', weekDays);
     const localeMonth = justDate.getMonthName();
 
     const weekInfo = justDate.getLocaleWeekInfo();//This gives firstDay 1 based, Monday is 1, ..
@@ -149,7 +148,6 @@ function Month(props) {
     let isSun = (day.toLowerCase() === "sunday"
       || day.toLowerCase() === "sun"
       || (day.toLowerCase === "s" && index === weekDays.indexOf('s')));
-        console.log(isSun);
     return isSun;
   };
 

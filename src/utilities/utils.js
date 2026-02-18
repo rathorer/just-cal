@@ -295,9 +295,10 @@ export function sanitizeHTML(html,
         node.replaceWith(...node.childNodes);
         return;
       }
-      if (tag === 'a' && attr.name === 'href') {
-        if (!/^(https?:|mailto:|tel:)/i.test(attr.value)
-          || !isSafeHref(attr.value)) {
+      if (tag === 'a' && node.hasAttribute('href')) {
+        const hrefVal = node.getAttribute('href');
+        if (!/^(https?:|mailto:|tel:)/i.test(hrefVal)
+          || !isSafeHref(hrefVal)) {
           node.removeAttribute('href');
         }
       }
