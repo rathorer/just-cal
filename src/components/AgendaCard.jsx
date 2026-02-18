@@ -26,6 +26,7 @@ const AgendaCard = ({
   const [updatingTime, setUpdatingTime] = useState(false);
   const [updatingReminder, setUpdatingReminder] = useState(false);
   const [minDescHeight, setMinDescHeight] = useState(6);
+  const [descPlaceholder, setDescPlaceholder] = useState("");
   const titleRef = useRef(null);
   const descRef = useRef(null);
 
@@ -52,7 +53,8 @@ const AgendaCard = ({
     ["Add/Update description",
       function updateDesc(idx, e) {
         descRef.current.focus();
-        setMinDescHeight(6);
+        setMinDescHeight(20);
+        setDescPlaceholder("Add description or more details..");
         console.log("Add or Update description", idx);
       }],
     ["Move to next day",
@@ -76,34 +78,31 @@ const AgendaCard = ({
 
   const handleTitleBlur = (html) => {
     console.log('using sanitized html: ', html.innerText);
-    const htmlNode = stringToNode(html);
-    let nextTitle;
-    if (htmlNode.nodeType === Node.ELEMENT_NODE) {
-      nextTitle = htmlNode.innerText;
-    } else if (htmlNode.nodeType === Node.TEXT_NODE) {
-      nextTitle = htmlNode.nodeValue;
-    } else {
-      console.error("Recieved unknown node from content editable.", html);
-    }
+    if (html) {
+      const htmlNode = stringToNode(html);
+      let nextTitle;
+      console.log(htmlNode.tagName);
+      if (htmlNode.nodeType === Node.ELEMENT_NODE) {
+        nextTitle = htmlNode.innerText;
+      } else if (htmlNode.nodeType === Node.TEXT_NODE) {
+        nextTitle = htmlNode.nodeValue;
+      } else {
+        console.error("Recieved unknown node from content editable.", html);
+      }
 
-    if (nextTitle.length === 0) {
-      return;
+      if (nextTitle.length === 0) {
+        return;
+      }
+      onItemUpdate?.(index, { title: nextTitle, user_input: nextTitle });
     }
-    onItemUpdate?.(index, { title: nextTitle, user_input: nextTitle });
   };
 
   const handleDescriptionBlur = (html) => {
-    let nextDescription;
-    const htmlNode = stringToNode(html);
-    //Duplicate code, because we want to add a check for tag type here.
-    if (htmlNode.nodeType === Node.ELEMENT_NODE) {
-      nextDescription = htmlNode.innerText;
-    } else if (htmlNode.nodeType === Node.TEXT_NODE) {
-      nextDescription = htmlNode.nodeValue;
-    } else {
-      console.error("Recieved unknown node from content editable.", html);
+    if (html) {
+      // The html passed from ContentEditable is already sanitized
+      // Just save it directly without parsing
+      onItemUpdate?.(index, { description: html });
     }
-    onItemUpdate?.(index, { description: nextDescription });
   };
   const handleTimeUpdate = function (time) {
     console.log('updating time', time);
@@ -113,7 +112,7 @@ const AgendaCard = ({
   }
 
   const handleReminderUpdate = function (time) {
-    console.log('updating time', time);
+    console.log('updating rem', time);
     agendaItem.reminder = time.toISOString();
     setUpdatingReminder(false);
     onItemUpdate?.(index, { reminder: agendaItem.reminder });
@@ -165,10 +164,10 @@ const AgendaCard = ({
               {agendaItem.title}
             </h2>
           </ContentEditable>
-          <ContentEditable onBlur={handleDescriptionBlur} ref={descRef}>
-            <p className={"text-md text-base-content/80 mt-1 min-h-" + minDescHeight}>
-              {agendaItem.description}
-            </p>
+
+          <ContentEditable initialHTML={agendaItem.description} onBlur={handleDescriptionBlur} ref={descRef} placeholder={descPlaceholder}>
+            <div className="text-md text-base-content/80 mt-1" style={{ minHeight: `${minDescHeight * 0.25}rem` }}>
+            </div>
           </ContentEditable>
         </div>
       </div>

@@ -1,11 +1,12 @@
 import { useEffect, useRef, useCallback, forwardRef } from "react"
 import { Constants } from "../utilities/constants"
-import { sanitizeHTML } from "../utilities/utils"
+import { sanitizeHTML,  } from "../utilities/utils"
 import { renderToStaticMarkup } from "react-dom/server"
 
 export const ContentEditable = forwardRef(({
   children,
   initialHTML = "",
+  placeholder = "",
   onChange,
   onBlur
 }, externalRef) => {
@@ -26,16 +27,36 @@ export const ContentEditable = forwardRef(({
     }
   }, [externalRef]);
   
+  const decodeHTML = (html) => {
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = html;
+    return textarea.value;
+  };
+
   useEffect(() => {
     if (!ref.current || isFocused.current) {
       return;
     }
-    const rawHTML = renderToStaticMarkup(children);
-    const sanitized = sanitizeHTML(rawHTML);
-    if (ref.current.innerHTML !== sanitized) {
-      ref.current.innerHTML = sanitized;
+    let htmlContent;
+    
+    // Prioritize initialHTML prop over children
+    if (initialHTML) {
+      const decodedHtml = decodeHTML(initialHTML);
+      htmlContent = sanitizeHTML(decodedHtml);
+    } else if (typeof children === 'string') {
+      // If children is already an HTML string, decode it first, then sanitize
+      const decodedHtml = decodeHTML(children);
+      htmlContent = sanitizeHTML(decodedHtml);
+    } else if (children) {
+      // If children is a React element, convert to HTML first
+      const rawHTML = renderToStaticMarkup(children);
+      htmlContent = sanitizeHTML(rawHTML);
     }
-  }, [children])
+    
+    if (htmlContent && ref.current.innerHTML !== htmlContent) {
+      ref.current.innerHTML = htmlContent;
+    }
+  }, [children, initialHTML])
 
   const emitChange = () => {
     const html = editorRef.current.innerHTML
@@ -62,12 +83,32 @@ export const ContentEditable = forwardRef(({
     selection.addRange(range);
   };
 
+  const insertHtmlAtCursor = (html) => {
+    const selection = window.getSelection();
+    if (selection.rangeCount === 0) return;
+
+    const range = selection.getRangeAt(0);
+    range.deleteContents(); // Clear any selected text
+
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    const fragment = document.createDocumentFragment();
+    while (tempDiv.firstChild) {
+      fragment.appendChild(tempDiv.firstChild);
+    }
+    range.insertNode(fragment);
+    range.collapse(false);
+
+    selection.removeAllRanges();
+    selection.addRange(range);
+  };
+
   const handlePaste = (e) => {
     e.preventDefault()
-    const text = e.clipboardData.getData("text/plain")
-    //document.execCommand("insertText", false, text)
-    insertTextAtCursor(text);
-    onChange(text);
+    const html = e.clipboardData.getData("text/html");
+    const sanitizedHtml = sanitizeHTML(html);
+    console.log('Sanitized HTML:', sanitizedHtml);
+    insertHtmlAtCursor(sanitizedHtml);
   };
 
   const handleInput = (e) => {
@@ -91,7 +132,7 @@ export const ContentEditable = forwardRef(({
       ref={ref}
       contentEditable
       suppressContentEditableWarning
-      data-placeholder="Add description here.." 
+      data-placeholder={placeholder}
       onPaste={handlePaste}
       onInput={() => onChange?.(sanitizeHTML(ref.current.innerHTML))}
       onFocus={() => {
