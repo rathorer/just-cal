@@ -117,7 +117,7 @@ pub async fn get_items_for_month(
     date: DateTime<Utc>,
 ) -> Result<Vec<(String, Vec<String>)>, String> {
     
-    let (_locale_date_str, _key, store_key) = parse_date_keys(date);
+    let (_locale_date_str, _key,    store_key) = parse_date_keys(date);
     let store = get_store_with_fallback(Some(&app), &manager, &store_key, &_locale_date_str)?;
 
     let month_items: Vec<(String, Vec<String>)> = store
@@ -175,7 +175,9 @@ pub async fn delete_single_item_of_date(
         .get(&key)
         .and_then(|v: serde_json::Value| serde_json::from_value::<Vec<Item>>(v.clone()).ok())
         .unwrap_or_default();
+    println!("incomming: {}", &item.id);
     day_items.retain(|x| x.id != item.id);
+    print!("items: {:?}", &day_items);
     store.set(
         &key,
         serde_json::to_value(&day_items).map_err(|e| e.to_string())?,

@@ -25,20 +25,12 @@ function Month(props) {
   const containerRef = useRef(null);
   const width = useWindowWidth();
 
+  const todaysDate = new Date();
   const month = JustDate.getMonthIndex(props.month);
   console.log('month', month, 'prop-month', props.month);
   const year = props.year;
-  //setSelectedDate(props.date);
 
 
-  // const handleSelectedDate = (date) => {
-  //   // console.log(date);
-  //   if (Number.isInteger(date)) {
-  //     setSelectedDate(date);
-  //   } else {
-  //     console.error('Not a valid date selected.');
-  //   }
-  // };
   const handleSelectedDate = useCallback((date) => {
     if (Number.isInteger(date)) {
       setSelectedDate(date);
@@ -72,6 +64,7 @@ function Month(props) {
     const monthDays = justDate.getDayNumbersInMonth();
     const dayNameFormat = width > 700 ? 'long' : width > 300 ? 'short' : 'narrow';
     const weekDays = justDate.getLocalizedWeekdays(dayNameFormat);
+    console.log('weekdays:', weekDays);
     const localeMonth = justDate.getMonthName();
 
     const weekInfo = justDate.getLocaleWeekInfo();//This gives firstDay 1 based, Monday is 1, ..
@@ -156,9 +149,9 @@ function Month(props) {
     let isSun = (day.toLowerCase() === "sunday"
       || day.toLowerCase() === "sun"
       || (day.toLowerCase === "s" && index === weekDays.indexOf('s')));
-    //console.log(isSun);
+        console.log(isSun);
     return isSun;
-  }
+  };
 
   //Dragging events:
   useEffect(() => {
@@ -192,24 +185,24 @@ function Month(props) {
 
   return (
     <div ref={containerRef} className="h-[calc(100vh-3rem)] flex flex-1 overflow-hidden">
-      {/* Left Section - Dynamic width */}
       <div style={{ width: `${leftWidth}%` }} className="bg-base-100 flex flex-col">
         {/* Optional: Inner header or toolbar */}
         <div className="pl-3 bg-base-100/90 p-2 border-b border-base-100 text-base-content">
           <div className="grid grid-cols-7 flex-row">
             {weekDays.map((day, idx) => (
-              <div key={monthName + day} className={"pl-0 p-2 h-8 text-xl text-center font-semibold"}>{day}</div>
+              <div key={`${monthName}-${idx}`} className={"pl-0 p-2 h-8 text-xl text-center font-semibold " + (isSunday(day, idx) ? "text-base-content/70":"")}>{day}</div>
             ))}
           </div>
         </div>
         <div className="flex-1 p-2 pt-0 overflow-y-auto">
-          <div className="prose max-w-none">
-            <div className={`grid grid-cols-7 divide-x divide-y divide-base-content/30 text-base-content/90 border border-base-content/30 month-grid ${isLoadingItems ? 'loading' : ''}`}>
+          <div className="prose max-w-none h-full">
+            <div className={`grid grid-cols-7 auto-rows-fr divide-x divide-y divide-base-content/30 text-base-content/90 border border-base-content/30 month-grid h-full ${isLoadingItems ? 'loading' : ''}`}>
               {monthDates.map((date, idx) => {
                 if (date) {
                   let dateKey = JustDate.toISOLikeDateString(date);
                   let items = monthItems[dateKey];
                   const isSelected = date.getDate() === selectedDate;
+                  let isToday = date.getDate() === todaysDate.getDate();
                   return <Day key={dateKey}
                     date={date}
                     index={idx}
@@ -217,7 +210,8 @@ function Month(props) {
                     handleSelectedDate={handleSelectedDate}
                     onAgendaUpdate={handleAgendaUpdateByDay}
                     items={items}
-                    isSelected={isSelected} />
+                    isSelected={isSelected}
+                    isToday={isToday} />
                 } else {
                   return <div key={idx} className="p-0 h-42 flex flex-col"></div>
                 }

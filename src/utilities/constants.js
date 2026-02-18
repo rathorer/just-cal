@@ -13,6 +13,7 @@ export const Constants = Object.freeze({
     REMINDER_TIME_PRECISION: 15,//in minutes
     SENTENCE_DETECTION: /^[^.?!]+[.?!]/,
     TIME_FORMAT: "short",//"full", "long", "medium", "short"
+    TIME_SELECTER_RANGE_H: 5,//in hours, this will show different times within +-5 hours window
     REMINDER_INTENT_REGEX:
         /\b(remind(?:\s+me)?|reminder|notify(?:\s+me)?|alert(?:\s+me)?|let\s+me\s+know|ping|buzz\s+me|give\s+me\s+(?:a\s+)?heads?\s+up|drop\s+me\s+(?:a\s+)?reminder|send\s+me\s+(?:a\s+)?notification|(?:set|add|put|keep)\s+(?:a|an|the)?\s*(?:note|reminder|alarm|notification))\b/,
     TIME_BARE_NUMBER_REGEX: /\b([1-9]|1[0-9]|2[0-3])\b/,

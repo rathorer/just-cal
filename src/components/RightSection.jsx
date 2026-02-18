@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { invoke } from "@tauri-apps/api/core";
-import UndoIcon from './icons/Undo';
 import useCache from '../hooks/useCache';
 import DayAgenda from './DayAgenda';
 import { getReminder } from '../utilities/reminderUtils';
@@ -21,7 +20,7 @@ function RightSection(props) {
   console.log('dateasKey:', dateAsKey);
   //const [currentDate, setCurrentDate] = useState(selectedDate);
   const [date, setDate] = useState(dateObj);
-  const [items, setItems] = useState({ [dateAsKey]: [] });
+  const [items, setItems] = useState({ [dateAsKey]: undefined });
   const [recentRemoved, setRecentRemoved] = useState({ [dateAsKey]: [] });
   //const agendaCache = useCache(cacheTTL);
   const saveTimerRef = useRef(null);
@@ -119,7 +118,7 @@ function RightSection(props) {
           let jsonDate = date.toISOString();
           const agendaItem = removedItem.item;
           try {
-            console.log('calling get_items_for_date.', agendaItem);
+            console.log('calling delete_single_item_of_date.', agendaItem);
             await invoke("delete_single_item_of_date", { date: jsonDate, item: agendaItem });
             console.log("Removed item from db", agendaItem);
           } catch (error) {

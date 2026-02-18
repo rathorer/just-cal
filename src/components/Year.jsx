@@ -1,12 +1,6 @@
 import JustDate from './../utilities/justDate';
-import { invoke } from "@tauri-apps/api/core";
 import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
-import { useTheme } from './../hooks/useTheme';
-import { event } from '@tauri-apps/api';
-import useWindowWidth from './../hooks/useWindowWidth';
-import RightSection from './RightSection';
 import { Constants } from '../utilities/constants';
-import { locale } from '@tauri-apps/plugin-os';
 
 
 function Year(props) {
@@ -14,13 +8,11 @@ function Year(props) {
     const prevSelectedMonth = props.month;
     const locale = props.locale;
     const handleMonthSelection = props.onMonthClick;
-    const [selectedDate, setSelectedDate] = useState(props.date);
     const [leftWidth, setLeftWidth] = useState(Constants.LEFT_SECTION_DEFAULT_WIDTH);
     const [isDragging, setIsDragging] = useState(false);
     const [months, setMonths] = useState([]);
 
     const containerRef = useRef(null);
-    const width = useWindowWidth();
 
     const monthList = useMemo(() => {
         //let justDate = new JustDate(date);
@@ -86,9 +78,10 @@ function Year(props) {
                     >
                         {months.map((month, idx) => {
                             return <div 
-                                key={idx} 
+                                key={idx}
                                 onClick={() => handleMonthClick(idx)}
-                                className="p-4 flex items-center justify-center font-semibold text-center hover:bg-base-200 hover:cursor-pointer transition-colors"
+                                className=
+                                {"p-4 flex items-center justify-center font-semibold text-center hover:bg-base-200 hover:cursor-pointer transition-colors" + (idx == prevSelectedMonth? " border-1 !border-info/80": "")}
                             >{month}</div>
                         })}
                     </div>
@@ -101,14 +94,6 @@ function Year(props) {
             />
             {/* Right Section - Dynamic width */}
             <div style={{ width: `${100 - leftWidth}%` }} className="hidden lg:flex lg:flex-col bg-base-200 border-l border-base-200">
-                {/* <RightSection
-                    year={year}
-                    month={0}
-                    monthName={monthName}
-                    onAgendaAdd={() => {}}
-                    onAgendaEdit={() => {}}
-                    selectedDate={selectedDate}
-                    lastAgendaUpdate={lastAgendaUpdate} /> */}
             </div>
         </div >
     )

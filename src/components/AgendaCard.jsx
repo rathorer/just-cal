@@ -78,9 +78,9 @@ const AgendaCard = ({
     console.log('using sanitized html: ', html.innerText);
     const htmlNode = stringToNode(html);
     let nextTitle;
-    if(htmlNode.nodeType === Node.ELEMENT_NODE){
+    if (htmlNode.nodeType === Node.ELEMENT_NODE) {
       nextTitle = htmlNode.innerText;
-    } else if(htmlNode.nodeType === Node.TEXT_NODE){
+    } else if (htmlNode.nodeType === Node.TEXT_NODE) {
       nextTitle = htmlNode.nodeValue;
     } else {
       console.error("Recieved unknown node from content editable.", html);
@@ -96,9 +96,9 @@ const AgendaCard = ({
     let nextDescription;
     const htmlNode = stringToNode(html);
     //Duplicate code, because we want to add a check for tag type here.
-    if(htmlNode.nodeType === Node.ELEMENT_NODE){
+    if (htmlNode.nodeType === Node.ELEMENT_NODE) {
       nextDescription = htmlNode.innerText;
-    } else if(htmlNode.nodeType === Node.TEXT_NODE){
+    } else if (htmlNode.nodeType === Node.TEXT_NODE) {
       nextDescription = htmlNode.nodeValue;
     } else {
       console.error("Recieved unknown node from content editable.", html);
@@ -127,12 +127,12 @@ const AgendaCard = ({
           {updatingTime
             ? <TimePicker onTimeChange={handleTimeUpdate} selectedTime={agendaItem.time} />
             : (event &&
-              <span className="text-xs text-base-content/60 font-medium">
+              <span onDoubleClick={moreActions[0][1]} className="text-xs text-base-content/60 font-medium">
                 At {event}</span>)
           }
 
           {updatingReminder ? <TimePicker onTimeChange={handleReminderUpdate} selectedTime={agendaItem.reminder} />
-            : <span className="text-xs text-base-content/60 font-medium">
+            : <span onDoubleClick={moreActions[1][1]} className="text-xs text-base-content/60 font-medium">
               Rem: {reminder}</span>}
           <div className="flex items-center gap-[2px] mb-1 border-b border-base-300 opacity-0 group-hover:opacity-100 transition-opacity">
             {!isMarkDone() && <MoreActions key={keyId} actions={moreActions} />}
@@ -166,8 +166,7 @@ const AgendaCard = ({
             </h2>
           </ContentEditable>
           <ContentEditable onBlur={handleDescriptionBlur} ref={descRef}>
-            <p className={"text-md text-base-content/80 mt-1 min-h-"+minDescHeight}
-            data-placeholder="Add description here.." >
+            <p className={"text-md text-base-content/80 mt-1 min-h-" + minDescHeight}>
               {agendaItem.description}
             </p>
           </ContentEditable>

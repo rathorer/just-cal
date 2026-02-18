@@ -9,16 +9,13 @@ import { getReminder } from "../utilities/reminderUtils";
 function Day(props) {
   const [greetMsg, setGreetMsg] = useState("");
   let date = props.date;//JustDate object
-  //TODO: Start here, date is coming invalid.
-  //console.log(date);
   let index = props.index;
+  const isToday = props.isToday;
   let selectedDate = props.selectedDate;
   let existingItems = props.items || [];
   let handleAgendaUpdateToParent = props.onAgendaUpdate;
   //const onDayItemUpdate = 
-  console.log('existingItems ' + date.getDate(), existingItems);
-  // const [date, setDate] = useState(currentDate);
-  //const [tasks, setTasks] = useState(props.items || []);
+
   const tasksRef = useRef(existingItems);
   const [isDirty, setIsDirty] = useState(false)
   const [currentDate, setCurrentDate] = useState(date);
@@ -27,7 +24,6 @@ function Day(props) {
   const skipFirstEnterSaveRef = useRef(false);
 
   useEffect(() => {
-    //console.log(date);
     setCurrentDate(date);
     setIsDirty(false);
   }, [date]);
@@ -90,19 +86,6 @@ function Day(props) {
     }
   }, [selectedDate]);
 
-  // useEffect(() => {
-  //   let ul = editorRef.current && editorRef.current.firstChild;
-  //   console.log(date, selectedDate);
-  //   console.log('trying to scroll..');
-  //   if (ul) {
-  //     const lastChild = ul.lastElementChild;
-  //     console.log('last', lastChild);
-  //     if (lastChild) {
-  //       // Use scrollIntoView to bring the last element into view
-  //       lastChild.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  //     }
-  //   }
-  // }, [existingItems])
 
   const handleDayClick = (event, t) => {
     //console.log(event);
@@ -154,7 +137,6 @@ function Day(props) {
         tasksRef.current = items;//update new item
         //todo:Lets save to localStorage first and fire a request to save at backend
         const backendItems = prepareItems(items);
-        //console.log('save_items_for_date', date);
         try {
           console.log('save_items_for_date', backendItems);
           const resp = await invoke("save_items_for_date", { date: date.toISOString(), items: backendItems });
@@ -164,7 +146,6 @@ function Day(props) {
         } catch (error) {
           console.error('Error while saving..', error);
         }
-        //console.log(resp);
       }
     }
   };
@@ -340,7 +321,7 @@ function Day(props) {
 
   return (
     <div key={index}
-      className={"p-0 h-42 flex flex-col hover:cursor-text"
+      className={"p-0 flex flex-col hover:cursor-text h-full"
         + (date && date.getDate() === selectedDate ? " border-1 !border-info/80" : "")
         + (index >= 28 ? "border-1 border-r border-base-content/20" : "")}//this is to avoid right border
     //  missing in last div, 28 index tells the last line has items.
@@ -348,7 +329,7 @@ function Day(props) {
       {date && (<>
         <a className={"link inline-block p-0 bg-base-200/90 rounded hover:text-accent hover:bg-base-300 " +
           (date && date.getDayName() === "Sunday" ? 'text-error/80' : '')}>
-          <h2 className={"text-xl pt-1 pr-2 font-bold flex justify-end " +
+          <h2 className={"text-xl pt-1 pr-2 font-bold flex justify-end " + (isToday ? "bg-info/20": "") +
             (date && date.getDate() === selectedDate ?
               "text-info-content/90 bg-info/80 hover:text-info-content hover:bg-info " : "")}
             onClick={handleDayClick}>
@@ -357,7 +338,7 @@ function Day(props) {
           </h2></a>
         {/* <div className="card bg-base-100">*/}
         <div id={"editable-div-" + index} key={index}
-          className="overflow-y-auto min-h-auto max-h-full no-scrollbar p-0 text-xxs focus:outline-1 custom-editor"
+          className="overflow-y-auto min-h-auto max-h-full no-scrollbar p-0 text-xxs focus:ring-0 outline-none custom-editor"
           ref={editorRef}
           contentEditable={true}
           suppressContentEditableWarning={true}
