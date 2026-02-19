@@ -21,7 +21,7 @@ export default function Header(props) {
 
   return (
     <div className="flex flex-col">
-      <div className="h-10 shadow-md flex items-center px-3 bg-gradient-to-r from-dark-teal via-blue/90 to-dark-teal/90 bg- text-header-teal-content border-b border-teal-700/30">
+      <div className="h-10 shadow-md flex items-center px-3 bg-gradient-to-r from-dark-teal via-blue/70 to-dark-teal/90 text-header-teal-content border-b border-teal-700/30">
       {/* <div className="h-10 shadow-md flex items-center px-3 bg-gradient-to-r from-teal-900 via-teal-700 to-teal-800 text-base-content dark:text-white border-b border-orange-700/30"> */}
         <div className="flex justify-start basis-4/5 w-full">
           <div className="flex items-center gap-4">

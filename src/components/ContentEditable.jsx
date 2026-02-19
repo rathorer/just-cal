@@ -6,8 +6,10 @@ import { renderToStaticMarkup } from "react-dom/server"
 export const ContentEditable = forwardRef(({
   children,
   initialHTML = "",
+  placeholder,
   onChange,
-  onBlur
+  onBlur,
+  onFocus
 }, externalRef) => {
 
   const ref = useRef(null);
@@ -76,7 +78,6 @@ export const ContentEditable = forwardRef(({
   };
 
   const handleBlur = (e) => {
-    console.log('in on blur', ref.current.innerText);
     isFocused.current = false;
     const sanitized = sanitizeHTML(
       ref.current.innerHTML
@@ -91,11 +92,12 @@ export const ContentEditable = forwardRef(({
       ref={ref}
       contentEditable
       suppressContentEditableWarning
-      data-placeholder="Add description here.." 
+      data-placeholder={placeholder}
       onPaste={handlePaste}
       onInput={() => onChange?.(sanitizeHTML(ref.current.innerHTML))}
       onFocus={() => {
         isFocused.current = true;
+        onFocus && onFocus();
       }}
       onBlur={() => handleBlur()}
     />

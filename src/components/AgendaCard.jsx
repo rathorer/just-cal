@@ -22,10 +22,11 @@ const AgendaCard = ({
   const toReadableTime = function (dateTimeISOString) {
     return new Date(dateTimeISOString).toLocaleTimeString(undefined, { timeStyle: Constants.TIME_FORMAT });
   };
-
+  const DESC_BOX_HEIGHT = 6;
   const [updatingTime, setUpdatingTime] = useState(false);
   const [updatingReminder, setUpdatingReminder] = useState(false);
-  const [minDescHeight, setMinDescHeight] = useState(6);
+  const [minDescHeight, setMinDescHeight] = useState(DESC_BOX_HEIGHT);
+  const [descPlaceholder, setDescPlaceholder] = useState("");
   const titleRef = useRef(null);
   const descRef = useRef(null);
 
@@ -38,21 +39,29 @@ const AgendaCard = ({
     MOVE_ITEM: 3
   });
 
+  const handleDescFocus = function (e) {
+    setMinDescHeight(DESC_BOX_HEIGHT);
+    setDescPlaceholder("Add description/more details here..");
+  };
   const moreActions = [
     ["Add/Update event time",
       function updateTime(idx, e) {
-        setUpdatingTime(true);
-        console.log('Updating time', idx);
+        if (!isMarkDone()) {
+          setUpdatingTime(true);
+          console.log('Updating time', idx);
+        }
       }],
     ["Add/Update reminder",
       function updateRem(idx, e) {
-        setUpdatingReminder(true);
-        console.log('Updating reminder', idx);
+        if (!isMarkDone()) {
+          setUpdatingReminder(true);
+          console.log('Updating reminder', idx);
+        }
       }],
     ["Add/Update description",
       function updateDesc(idx, e) {
         descRef.current.focus();
-        setMinDescHeight(6);
+        handleDescFocus(e);
         console.log("Add or Update description", idx);
       }],
     ["Move to next day",
@@ -76,41 +85,49 @@ const AgendaCard = ({
 
   const handleTitleBlur = (html) => {
     console.log('using sanitized html: ', html.innerText);
-    const htmlNode = stringToNode(html);
-    let nextTitle;
-    if (htmlNode.nodeType === Node.ELEMENT_NODE) {
-      nextTitle = htmlNode.innerText;
-    } else if (htmlNode.nodeType === Node.TEXT_NODE) {
-      nextTitle = htmlNode.nodeValue;
-    } else {
-      console.error("Recieved unknown node from content editable.", html);
-    }
+    if (html) {
+      const htmlNode = stringToNode(html);
+      let nextTitle;
+      if (htmlNode.nodeType === Node.ELEMENT_NODE) {
+        nextTitle = htmlNode.innerText;
+      } else if (htmlNode.nodeType === Node.TEXT_NODE) {
+        nextTitle = htmlNode.nodeValue;
+      } else {
+        console.error("Recieved unknown node from content editable.", html);
+      }
 
-    if (nextTitle.length === 0) {
-      return;
+      if (nextTitle.length === 0) {
+        return;
+      }
+      onItemUpdate?.(index, { title: nextTitle, user_input: nextTitle });
     }
-    onItemUpdate?.(index, { title: nextTitle, user_input: nextTitle });
   };
 
   const handleDescriptionBlur = (html) => {
     let nextDescription;
-    const htmlNode = stringToNode(html);
-    //Duplicate code, because we want to add a check for tag type here.
-    if (htmlNode.nodeType === Node.ELEMENT_NODE) {
-      nextDescription = htmlNode.innerText;
-    } else if (htmlNode.nodeType === Node.TEXT_NODE) {
-      nextDescription = htmlNode.nodeValue;
+    if (html) {
+      const htmlNode = stringToNode(html);
+      //Duplicate code, because we want to add a check for tag type here.
+      if (htmlNode.nodeType === Node.ELEMENT_NODE) {
+        nextDescription = htmlNode.innerText;
+      } else if (htmlNode.nodeType === Node.TEXT_NODE) {
+        nextDescription = htmlNode.nodeValue;
+      } else {
+        console.error("Recieved unknown node from content editable.", html);
+      }
     } else {
-      console.error("Recieved unknown node from content editable.", html);
+      nextDescription = "";
+      setDescPlaceholder("");
     }
     onItemUpdate?.(index, { description: nextDescription });
   };
+
   const handleTimeUpdate = function (time) {
     console.log('updating time', time);
     agendaItem.time = time.toISOString();
     setUpdatingTime(false);
     onItemUpdate?.(index, { time: agendaItem.time });
-  }
+  };
 
   const handleReminderUpdate = function (time) {
     console.log('updating time', time);
@@ -120,11 +137,11 @@ const AgendaCard = ({
   }
 
   return (
-    <div key={keyId} className="relative group card bg-base-200/70 shadow-md border border-base-300 mb-2">
-      <div className="card-body p-4">
+    <div key={keyId} className="relative group card bg-base-200/70 shadow-md border border-base-300 mb-1">
+      <div className="card-body px-4 py-2">
         {/* Top icon row */}
         <div className="flex text-xs items-center justify-between">
-          {updatingTime
+          {updatingTime && !isMarkDone()
             ? <TimePicker onTimeChange={handleTimeUpdate} selectedTime={agendaItem.time} />
             : (event &&
               <span onDoubleClick={moreActions[0][1]} className="text-xs text-base-content/60 font-medium">
@@ -165,10 +182,15 @@ const AgendaCard = ({
               {agendaItem.title}
             </h2>
           </ContentEditable>
-          <ContentEditable onBlur={handleDescriptionBlur} ref={descRef}>
-            <p className={"text-md text-base-content/80 mt-1 min-h-" + minDescHeight}>
+          <ContentEditable
+            ref={descRef}
+            placeholder={descPlaceholder}
+            onBlur={handleDescriptionBlur}
+            onFocus={handleDescFocus}>
+            <div className="text-md text-base-content/80 mt-1"
+              style={{ minHeight: `${minDescHeight * 0.25}rem` }}>
               {agendaItem.description}
-            </p>
+            </div>
           </ContentEditable>
         </div>
       </div>

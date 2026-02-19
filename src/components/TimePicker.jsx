@@ -67,10 +67,10 @@ export function SearchableSelect(props) {
         const minutes = parseInt(inputTimeArr[1], 10);
 
         //show only 5 hours before and after times;
-        selectedTime.setHours(hours - Constants.TIME_SELECTER_RANGE_H);
+        selectedTime.setHours(Math.max(Constants.MY_DAY_START_H, hours - Constants.TIME_SELECTER_RANGE_H));
         selectedTime.setMinutes(minutes);
         const startH = selectedTime.getHours();
-        selectedTime.setHours(hours + Constants.TIME_SELECTER_RANGE_H);
+        selectedTime.setHours(startH + 2 * Constants.TIME_SELECTER_RANGE_H);
         const endH = selectedTime.getHours();
         for (let h = startH; h < endH; h++) {
             for (let m = 0; m < 60; m += Constants.REMINDER_TIME_PRECISION) {
@@ -116,7 +116,7 @@ export function SearchableSelect(props) {
             <input
                 type="text"
                 placeholder="Type or select..."
-                className="input input-xs max-w-16"
+                className="input input-primary input-xs max-w-16 focus:outline-none"
                 value={value}
                 onChange={(e) => handleChange(e)}
                 onBlur={handleBlur}

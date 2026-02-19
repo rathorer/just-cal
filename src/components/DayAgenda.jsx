@@ -75,8 +75,8 @@ function DayAgenda(props) {
 
   return (
     <div className="">
-      <div className="text-xl p-2 border-b border-base-100">
-        <h3 className="font-semibold text-base-content">{"Agenda: " + monthName + " " + selectedDate + ", " + year}</h3>
+      <div className="text-xl p-2 border-1 rounded-sm border-dark-teal bg-gradient-to-r from-dark-teal/20 via-blue/30 to-dark-teal/20">
+        <h3 className="font-semibold text-base-content">{monthName + " " + selectedDate + ", " + year + " Agenda"}</h3>
         {recentRemoved && recentRemoved.length > 0 ?
           <button title="Undo remove"
             className="btn btn-ghost btn-xs rounded text-base-content/70 hover:text-base-content hover:bg-base-300"
