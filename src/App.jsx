@@ -14,6 +14,7 @@ import JumpPrevIcon from "./components/icons/JumpPrev";
 import { arch, hostname, locale } from '@tauri-apps/plugin-os';
 import Year from "./components/Year";
 import Header from "./components/Header";
+import { SettingsPage } from "./pages/SettingsPage";
 
 const VIEW_TYPE = Object.freeze({ Year: 0, Month: 1, Week: 2 });
 function App() {
@@ -26,6 +27,7 @@ function App() {
   const [userLocale, setUserLocale] = useState("en-US");
   const [currentView, setCurrentView] = useState(VIEW_TYPE.Month);
   const [nextPrevText, setNextPrevText] = useState("month");
+  const [openSettings, setOpenSettings] = useState(false);
 
   useEffect(() => {
     async function getLocale() {
@@ -84,6 +86,7 @@ function App() {
   };
 
   const handleNext = () => {
+    setOpenSettings(false);
     if (currentView === VIEW_TYPE.Month) {
       handleNextMonth();
     } else {
@@ -91,6 +94,7 @@ function App() {
     }
   };
   const handlePrev = () => {
+    setOpenSettings(false);
     if (currentView === VIEW_TYPE.Month) {
       handlePrevMonth();
     } else {
@@ -121,7 +125,7 @@ function App() {
     }
   };
   const handleView = (e) => {
-    console.log(e.target);
+    setOpenSettings(false);
     if (currentView === VIEW_TYPE.Month) {
       setCurrentView(VIEW_TYPE.Year);
       setNextPrevText("year");
@@ -176,10 +180,12 @@ function App() {
         handleView={handleView}
         toggleTheme={toggleTheme}
         theme={theme}
+        setOpenSettings={setOpenSettings}
         openMenu={openMenu}
       />
       <div className="flex flex-1 overflow-hidden">
         {
+          openSettings ? <SettingsPage onClose={()=> setOpenSettings(false)} /> :
           currentView == VIEW_TYPE.Month ?
             <Month date={dayDate} month={monthIndex} year={year} />
             :

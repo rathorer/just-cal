@@ -1,5 +1,8 @@
+/**
+ * Static Constants - Non-configurable app constants
+ * For user-configurable settings, see UserSettings.js and useUserSettings() hook
+ */
 import { ExtractedTime } from "./entities";
-
 export const Constants = Object.freeze({
     DEFAULT_REMIND_TIME: new ExtractedTime(10, 0, false),
     DEBOUNCE_DURATION: 2000,//2 secs
@@ -11,6 +14,9 @@ export const Constants = Object.freeze({
     LEFT_SECTION_MAX_WIDTH: 90, //%
     UNDO_DURATION_MS: 20000,//in milliseconds
     REMINDER_TIME_PRECISION: 15,//in minutes
+    NOTIFY_MINUTES_BEFORE_EVENT: 15,
+    
+    // Regex patterns for text analysis
     SENTENCE_DETECTION: /^[^.?!]+[.?!]/,
     TIME_FORMAT: "short",//"full", "long", "medium", "short"
     TIME_SELECTER_RANGE_H: 5,//in hours, this will show different times within +-5 hours window
@@ -23,7 +29,6 @@ export const Constants = Object.freeze({
     TIME_NATURAL_REGEX: /\b(noon|midday|midnight)\b/i,
     TIME_EXPLICIT_REGEX: /\b(?:(?:[01]?\d|2[0-3]):[0-5]\d|(?:1[0-2]|0?\d)\s?(?:am|pm)|(?:1[0-2]|0?\d)\s?o'?clock|(?:\d{3,4})\s?hours)\b/i,
 
-    NOTIFY_MINUTES_BEFORE_EVENT: 15,
     DEFAULT_ALLOWED_TAGS: [
         "p", "a", "b", "strong", "i", "em",
         "li", "ul",

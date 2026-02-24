@@ -5,6 +5,7 @@ use tauri::{Wry, AppHandle, Manager, State};
 mod storage_repo;
 mod store;
 mod models;
+mod settings_repo;
 
 use crate::store::{add_store_to_app_state, setup_new_store, get_or_reload_store};
 
@@ -141,7 +142,9 @@ pub fn run() {
             storage_repo::save_items_for_date,
             storage_repo::delete_single_item_of_date,
             storage_repo::update_single_item_of_date,
-            storage_repo::delete_items_for_date])
+            storage_repo::delete_items_for_date,
+            settings_repo::get_user_settings,
+            settings_repo::save_user_settings])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

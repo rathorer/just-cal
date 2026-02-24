@@ -81,7 +81,7 @@ function DayAgenda(props) {
           <button title="Undo remove"
             className="btn btn-ghost btn-xs rounded text-base-content/70 hover:text-base-content hover:bg-base-300"
             onClick={()=> onUndoRemove(dateAsKey)}>
-            <UndoIcon></UndoIcon>
+            <UndoIcon />
           </button> : <></>}
       </div>
       {items && items.map((item, i) => (

@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { Constants } from "../utilities/constants";
 import CheckIcon from "./icons/check";
 import { getReminder } from "../utilities/reminderUtils";
+import { useUserSettings } from "../contexts/UserSettingsContext";
 
 //import { DayPicker } from "react-day-picker";
 
@@ -16,6 +17,7 @@ function Day(props) {
   let handleAgendaUpdateToParent = props.onAgendaUpdate;
   //const onDayItemUpdate = 
 
+  const {settings} = useUserSettings();
   const tasksRef = useRef(existingItems);
   const [isDirty, setIsDirty] = useState(false)
   const [currentDate, setCurrentDate] = useState(date);
@@ -102,7 +104,8 @@ function Day(props) {
     } catch (e) { }
     saveTimerRef.current = setTimeout(() => {
       handleSave(ul);
-    }, Constants.DEBOUNCE_DURATION);
+    }, //
+    settings.debounceDuration);
   }
 
   function getItemsFromUl(ul) {
