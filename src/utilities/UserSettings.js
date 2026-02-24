@@ -5,23 +5,39 @@ import { ExtractedTime } from "./entities";
  * Each setting has validation and logging for invalid values
  */
 export class UserSettings {
+  #_keepDefaultReminder;
+  #_defaultRemindTime;
+  #_debounceDuration; // milliseconds
+  #_smallScreenWidth; // pixels
+  #_mediumScreenWidth; // pixels
+  #_maxCharsForTitle;
+  #_leftSectionDefaultWidth; // %
+  #_leftSectionMinWidth; // %
+  #_leftSectionMaxWidth; // %
+  #_undoDurationMs; // milliseconds
+  #_reminderTimePrecision; // minutes
+  #_timeFormat; // "full", "long", "medium", "short"
+  #_timeSelecterRangeH; // hours
+  #_myDayStartH; // hours (0-23)
+  #_notifyMinutesBeforeEvent; // minutes
+
   constructor() {
     // Initialize with defaults
-    this._keepDefaultReminder = true;
-    this._defaultRemindTime = new ExtractedTime(10, 0, false);
-    this._debounceDuration = 2000; // milliseconds
-    this._smallScreenWidth = 300; // pixels
-    this._mediumScreenWidth = 700; // pixels
-    this._maxCharsForTitle = 80;
-    this._leftSectionDefaultWidth = 80; // %
-    this._leftSectionMinWidth = 50; // %
-    this._leftSectionMaxWidth = 90; // %
-    this._undoDurationMs = 20000; // milliseconds
-    this._reminderTimePrecision = 15; // minutes
-    this._timeFormat = "short"; // "full", "long", "medium", "short"
-    this._timeSelecterRangeH = 5; // hours
-    this._myDayStartH = 7; // hours (0-23)
-    this._notifyMinutesBeforeEvent = 15; // minutes
+    this.#_keepDefaultReminder = true;
+    this.#_defaultRemindTime = new ExtractedTime(10, 0, false);
+    this.#_debounceDuration = 2000; // milliseconds
+    this.#_smallScreenWidth = 300; // pixels
+    this.#_mediumScreenWidth = 700; // pixels
+    this.#_maxCharsForTitle = 80;
+    this.#_leftSectionDefaultWidth = 80; // %
+    this.#_leftSectionMinWidth = 50; // %
+    this.#_leftSectionMaxWidth = 90; // %
+    this.#_undoDurationMs = 20000; // milliseconds
+    this.#_reminderTimePrecision = 15; // minutes
+    this.#_timeFormat = "short"; // "full", "long", "medium", "short"
+    this.#_timeSelecterRangeH = 5; // hours
+    this.#_myDayStartH = 7; // hours (0-23)
+    this.#_notifyMinutesBeforeEvent = 15; // minutes
 
     // Store defaults for reset functionality
     this._defaults = this._captureDefaults();
@@ -31,90 +47,90 @@ export class UserSettings {
     return {
       keepDefaultReminder: true,
       defaultRemindTime: new ExtractedTime(
-        this._defaultRemindTime.hour,
-        this._defaultRemindTime.minute,
-        this._defaultRemindTime.isApprox
+        this.#_defaultRemindTime.hour,
+        this.#_defaultRemindTime.minute,
+        this.#_defaultRemindTime.isApprox
       ),
-      debounceDuration: this._debounceDuration,
-      smallScreenWidth: this._smallScreenWidth,
-      mediumScreenWidth: this._mediumScreenWidth,
-      maxCharsForTitle: this._maxCharsForTitle,
-      leftSectionDefaultWidth: this._leftSectionDefaultWidth,
-      leftSectionMinWidth: this._leftSectionMinWidth,
-      leftSectionMaxWidth: this._leftSectionMaxWidth,
-      undoDurationMs: this._undoDurationMs,
-      reminderTimePrecision: this._reminderTimePrecision,
-      timeFormat: this._timeFormat,
-      timeSelecterRangeH: this._timeSelecterRangeH,
-      myDayStartH: this._myDayStartH,
-      notifyMinutesBeforeEvent: this._notifyMinutesBeforeEvent,
+      debounceDuration: this.#_debounceDuration,
+      smallScreenWidth: this.#_smallScreenWidth,
+      mediumScreenWidth: this.#_mediumScreenWidth,
+      maxCharsForTitle: this.#_maxCharsForTitle,
+      leftSectionDefaultWidth: this.#_leftSectionDefaultWidth,
+      leftSectionMinWidth: this.#_leftSectionMinWidth,
+      leftSectionMaxWidth: this.#_leftSectionMaxWidth,
+      undoDurationMs: this.#_undoDurationMs,
+      reminderTimePrecision: this.#_reminderTimePrecision,
+      timeFormat: this.#_timeFormat,
+      timeSelecterRangeH: this.#_timeSelecterRangeH,
+      myDayStartH: this.#_myDayStartH,
+      notifyMinutesBeforeEvent: this.#_notifyMinutesBeforeEvent,
     };
   }
 
   get keepDefaultReminder(){
-    return this._keepDefaultReminder;
+    return this.#_keepDefaultReminder;
   }
   // Getters
   get defaultRemindTime() {
-    return this._defaultRemindTime;
+    return this.#_defaultRemindTime;
   }
 
   get debounceDuration() {
-    return this._debounceDuration;
+    return this.#_debounceDuration;
   }
 
   get smallScreenWidth() {
-    return this._smallScreenWidth;
+    return this.#_smallScreenWidth;
   }
 
   get mediumScreenWidth() {
-    return this._mediumScreenWidth;
+    return this.#_mediumScreenWidth;
   }
 
   get maxCharsForTitle() {
-    return this._maxCharsForTitle;
+    return this.#_maxCharsForTitle;
   }
 
   get leftSectionDefaultWidth() {
-    return this._leftSectionDefaultWidth;
+    return this.#_leftSectionDefaultWidth;
   }
 
   get leftSectionMinWidth() {
-    return this._leftSectionMinWidth;
+    return this.#_leftSectionMinWidth;
   }
 
   get leftSectionMaxWidth() {
-    return this._leftSectionMaxWidth;
+    return this.#_leftSectionMaxWidth;
   }
 
   get undoDurationMs() {
-    return this._undoDurationMs;
+    return this.#_undoDurationMs;
   }
 
   get reminderTimePrecision() {
-    return this._reminderTimePrecision;
+    return this.#_reminderTimePrecision;
   }
 
   get timeFormat() {
-    return this._timeFormat;
+    return this.#_timeFormat;
   }
 
   get timeSelecterRangeH() {
-    return this._timeSelecterRangeH;
+    return this.#_timeSelecterRangeH;
   }
 
   get myDayStartH() {
-    return this._myDayStartH;
+    return this.#_myDayStartH;
   }
 
   get notifyMinutesBeforeEvent() {
-    return this._notifyMinutesBeforeEvent;
+    return this.#_notifyMinutesBeforeEvent;
   }
 
   // Setters with validation
 
   setKeepDefaultReminder(keep){
-    this._keepDefaultReminder = keep;
+    this.#_keepDefaultReminder = keep;
     return true;
   }
   setDefaultRemindTime(hour, minute, isApprox = false) {
@@ -131,7 +147,7 @@ export class UserSettings {
       );
       return false;
     }
-    this._defaultRemindTime = new ExtractedTime(hour, minute, isApprox);
+    this.#_defaultRemindTime = new ExtractedTime(hour, minute, isApprox);
     return true;
   }
 
@@ -142,7 +158,7 @@ export class UserSettings {
       );
       return false;
     }
-    this._debounceDuration = value;
+    this.#_debounceDuration = value;
     return true;
   }
 
@@ -153,18 +169,18 @@ export class UserSettings {
       );
       return false;
     }
-    this._smallScreenWidth = value;
+    this.#_smallScreenWidth = value;
     return true;
   }
 
   setMediumScreenWidth(value) {
-    if (!Number.isInteger(value) || value <= this._smallScreenWidth) {
+    if (!Number.isInteger(value) || value <= this.#_smallScreenWidth) {
       console.warn(
-        `Invalid medium screen width: ${value}. Must be > small screen width (${this._smallScreenWidth}). Keeping previous value.`
+        `Invalid medium screen width: ${value}. Must be > small screen width (${this.#_smallScreenWidth}). Keeping previous value.`
       );
       return false;
     }
-    this._mediumScreenWidth = value;
+    this.#_mediumScreenWidth = value;
     return true;
   }
 
@@ -175,7 +191,7 @@ export class UserSettings {
       );
       return false;
     }
-    this._maxCharsForTitle = value;
+    this.#_maxCharsForTitle = value;
     return true;
   }
 
@@ -186,13 +202,13 @@ export class UserSettings {
       );
       return false;
     }
-    if (value < this._leftSectionMinWidth || value > this._leftSectionMaxWidth) {
+    if (value < this.#_leftSectionMinWidth || value > this.#_leftSectionMaxWidth) {
       console.warn(
-        `Left section default width ${value} is outside min-max range (${this._leftSectionMinWidth}-${this._leftSectionMaxWidth}). Keeping previous value.`
+        `Left section default width ${value} is outside min-max range (${this.#_leftSectionMinWidth}-${this.#_leftSectionMaxWidth}). Keeping previous value.`
       );
       return false;
     }
-    this._leftSectionDefaultWidth = value;
+    this.#_leftSectionDefaultWidth = value;
     return true;
   }
 
@@ -203,13 +219,13 @@ export class UserSettings {
       );
       return false;
     }
-    if (value > this._leftSectionMaxWidth) {
+    if (value > this.#_leftSectionMaxWidth) {
       console.warn(
-        `Left section min width cannot be > max width (${this._leftSectionMaxWidth}). Keeping previous value.`
+        `Left section min width cannot be > max width (${this.#_leftSectionMaxWidth}). Keeping previous value.`
       );
       return false;
     }
-    this._leftSectionMinWidth = value;
+    this.#_leftSectionMinWidth = value;
     return true;
   }
 
@@ -220,13 +236,13 @@ export class UserSettings {
       );
       return false;
     }
-    if (value < this._leftSectionMinWidth) {
+    if (value < this.#_leftSectionMinWidth) {
       console.warn(
-        `Left section max width cannot be < min width (${this._leftSectionMinWidth}). Keeping previous value.`
+        `Left section max width cannot be < min width (${this.#_leftSectionMinWidth}). Keeping previous value.`
       );
       return false;
     }
-    this._leftSectionMaxWidth = value;
+    this.#_leftSectionMaxWidth = value;
     return true;
   }
 
@@ -237,7 +253,7 @@ export class UserSettings {
       );
       return false;
     }
-    this._undoDurationMs = value;
+    this.#_undoDurationMs = value;
     return true;
   }
 
@@ -248,7 +264,7 @@ export class UserSettings {
       );
       return false;
     }
-    this._reminderTimePrecision = value;
+    this.#_reminderTimePrecision = value;
     return true;
   }
 
@@ -260,7 +276,7 @@ export class UserSettings {
       );
       return false;
     }
-    this._timeFormat = value;
+    this.#_timeFormat = value;
     return true;
   }
 
@@ -271,7 +287,7 @@ export class UserSettings {
       );
       return false;
     }
-    this._timeSelecterRangeH = value;
+    this.#_timeSelecterRangeH = value;
     return true;
   }
 
@@ -282,7 +298,7 @@ export class UserSettings {
       );
       return false;
     }
-    this._myDayStartH = value;
+    this.#_myDayStartH = value;
     return true;
   }
 
@@ -293,7 +309,7 @@ export class UserSettings {
       );
       return false;
     }
-    this._notifyMinutesBeforeEvent = value;
+    this.#_notifyMinutesBeforeEvent = value;
     return true;
   }
 
@@ -304,23 +320,23 @@ export class UserSettings {
     return {
       keepDefaultReminder: this._keepDefaultReminder,
       defaultRemindTime: {
-        hour: this._defaultRemindTime.hour,
-        minute: this._defaultRemindTime.minute,
-        isApprox: this._defaultRemindTime.isApprox,
+        hour: this.#_defaultRemindTime.hour,
+        minute: this.#_defaultRemindTime.minute,
+        isApprox: this.#_defaultRemindTime.isApprox,
       },
-      debounceDuration: this._debounceDuration,
-      smallScreenWidth: this._smallScreenWidth,
-      mediumScreenWidth: this._mediumScreenWidth,
-      maxCharsForTitle: this._maxCharsForTitle,
-      leftSectionDefaultWidth: this._leftSectionDefaultWidth,
-      leftSectionMinWidth: this._leftSectionMinWidth,
-      leftSectionMaxWidth: this._leftSectionMaxWidth,
-      undoDurationMs: this._undoDurationMs,
-      reminderTimePrecision: this._reminderTimePrecision,
-      timeFormat: this._timeFormat,
-      timeSelecterRangeH: this._timeSelecterRangeH,
-      myDayStartH: this._myDayStartH,
-      notifyMinutesBeforeEvent: this._notifyMinutesBeforeEvent,
+      debounceDuration: this.#_debounceDuration,
+      smallScreenWidth: this.#_smallScreenWidth,
+      mediumScreenWidth: this.#_mediumScreenWidth,
+      maxCharsForTitle: this.#_maxCharsForTitle,
+      leftSectionDefaultWidth: this.#_leftSectionDefaultWidth,
+      leftSectionMinWidth: this.#_leftSectionMinWidth,
+      leftSectionMaxWidth: this.#_leftSectionMaxWidth,
+      undoDurationMs: this.#_undoDurationMs,
+      reminderTimePrecision: this.#_reminderTimePrecision,
+      timeFormat: this.#_timeFormat,
+      timeSelecterRangeH: this.#_timeSelecterRangeH,
+      myDayStartH: this.#_myDayStartH,
+      notifyMinutesBeforeEvent: this.#_notifyMinutesBeforeEvent,
     };
   }
 
@@ -377,23 +393,23 @@ export class UserSettings {
   resetToDefaults() {
     const defaults = this._defaults;
     this._keepDefaultReminder = defaults.keepDefaultReminder;
-    this._defaultRemindTime = new ExtractedTime(
+    this.#_defaultRemindTime = new ExtractedTime(
       defaults.defaultRemindTime.hour,
       defaults.defaultRemindTime.minute,
       defaults.defaultRemindTime.isApprox
     );
-    this._debounceDuration = defaults.debounceDuration;
-    this._smallScreenWidth = defaults.smallScreenWidth;
-    this._mediumScreenWidth = defaults.mediumScreenWidth;
-    this._maxCharsForTitle = defaults.maxCharsForTitle;
-    this._leftSectionDefaultWidth = defaults.leftSectionDefaultWidth;
-    this._leftSectionMinWidth = defaults.leftSectionMinWidth;
-    this._leftSectionMaxWidth = defaults.leftSectionMaxWidth;
-    this._undoDurationMs = defaults.undoDurationMs;
-    this._reminderTimePrecision = defaults.reminderTimePrecision;
-    this._timeFormat = defaults.timeFormat;
-    this._timeSelecterRangeH = defaults.timeSelecterRangeH;
-    this._myDayStartH = defaults.myDayStartH;
-    this._notifyMinutesBeforeEvent = defaults.notifyMinutesBeforeEvent;
+    this.#_debounceDuration = defaults.debounceDuration;
+    this.#_smallScreenWidth = defaults.smallScreenWidth;
+    this.#_mediumScreenWidth = defaults.mediumScreenWidth;
+    this.#_maxCharsForTitle = defaults.maxCharsForTitle;
+    this.#_leftSectionDefaultWidth = defaults.leftSectionDefaultWidth;
+    this.#_leftSectionMinWidth = defaults.leftSectionMinWidth;
+    this.#_leftSectionMaxWidth = defaults.leftSectionMaxWidth;
+    this.#_undoDurationMs = defaults.undoDurationMs;
+    this.#_reminderTimePrecision = defaults.reminderTimePrecision;
+    this.#_timeFormat = defaults.timeFormat;
+    this.#_timeSelecterRangeH = defaults.timeSelecterRangeH;
+    this.#_myDayStartH = defaults.myDayStartH;
+    this.#_notifyMinutesBeforeEvent = defaults.notifyMinutesBeforeEvent;
   }
 }

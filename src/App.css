@@ -103,11 +103,13 @@ button {
 }
 
 button:hover {
-  border-color: #396cd8;
+  border-color: var(--color-accent);/* #396cd8; */
+  background-color: var(--color-base-100);
 }
 button:active {
-  border-color: #396cd8;
-  background-color: #e8e8e8;
+  border-color: var(--color-accent-focus);/*#396cd8;*/
+  background-color: var(--color-base-300);
+  /* background-color: #e8e8e8; */
 }
 
 /* input,

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useUserSettings } from "../contexts/UserSettingsContext";
 import CrossIcon from "../components/icons/Cross";
 import UndoIcon from '../components/icons/Undo';
+import { Constants } from "../utilities/constants";
 
 // import "../styles/SettingsPage.css";
 
@@ -15,6 +16,7 @@ export function SettingsPage(props) {
   //const [keepDefaultReminder, setKeepDefaultReminder] = useState(settings.keepDefaultReminder);
   const [localSettings, setLocalSettings] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
+  const [settingsChanged, setSettingsChanged] = useState(false);//Tracks any changes compare to initial settings.
   const [validationErrors, setValidationErrors] = useState({});
   const [saveMessage, setSaveMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -47,6 +49,8 @@ export function SettingsPage(props) {
     }
   }, [settings]);
 
+
+
   const handleKeepReminder = (e) => {
     let isChecked = e.target.checked;
     //setKeepDefaultReminder(isChecked);
@@ -73,9 +77,18 @@ export function SettingsPage(props) {
       [field]: numValue,
     };
     setLocalSettings(newSettings);
-    const changed = Object.keys(initialSettings.current).some(
-      (key) => newSettings[key] !== initialSettings.current[key]
-    );
+    const changed = Object.keys(newSettings).some((key) => {
+      //Intentionaly using single != instead of double !== for implicit type conversion when comparing
+      //String value to int value.
+      if (key === "defaultRemindTimeHour") {
+        return newSettings[key] != initialSettings.current["defaultRemindTime"].hour;
+      }
+      if (key === "defaultRemindTimeMinute") {
+        return newSettings[key] != initialSettings.current["defaultRemindTime"].minute;
+      }
+      return newSettings[key] != initialSettings.current[key]
+    });
+    console.log(changed);
     setHasChanges(changed);
   };
 
@@ -219,34 +232,44 @@ export function SettingsPage(props) {
 
         // Save to backend
         const success = await saveSettings();
-        if (success) {
-          setSaveMessage("✓ Settings saved successfully!");
+        // if (success) {
+        //   setSaveMessage("✓ Settings saved successfully!");
+        //   setHasChanges(false);
+        //   setValidationErrors({});
+        //   setTimeout(() => setSaveMessage(""), 3000);
+        // } else {
+        //   setSaveMessage("✗ Failed to save settings. Please try again.");
+        // }
+        if(success){
           setHasChanges(false);
           setValidationErrors({});
-          setTimeout(() => setSaveMessage(""), 3000);
-        } else {
-          setSaveMessage("✗ Failed to save settings. Please try again.");
+          setSettingsChanged(true);//Tracks any changes compare to initial settings.
         }
       } catch (err) {
         console.error("Error saving settings:", err);
-        setSaveMessage("✗ Error saving settings. Please try again.");
+        setSaveMessage("✗ Error saving settings. Please try again or report to us.");
       } finally {
         setIsSaving(false);
-        handleClose();
       }
     }
-    handleClose();
   };
+
+  const saveAndClose = async () => {
+    if (hasChanges) {
+      handleSave();
+    }
+    handleClose();
+  }
 
   const handleReset = async () => {
     setIsSaving(true);
     const success = await resetToDefaults();
-    if (success) {
-      setSaveMessage("✓ Settings reset to defaults!");
-      setTimeout(() => setSaveMessage(""), 3000);
-    } else {
-      setSaveMessage("✗ Failed to reset settings. Please try again.");
-    }
+    // if (success) {
+    //   setSaveMessage("✓ Settings reset to defaults!");
+    //   setTimeout(() => setSaveMessage(""), 3000);
+    // } else {
+    //   setSaveMessage("✗ Failed to reset settings. Please try again.");
+    // }
     setIsSaving(false);
   };
 
@@ -259,25 +282,36 @@ export function SettingsPage(props) {
     // Reload from current settings
     if (settings) {
       setLocalSettings({
-        keepDefaultReminder: settings.keepDefaultReminder,
-        defaultRemindTimeHour: settings.defaultRemindTime.hour,
-        defaultRemindTimeMinute: settings.defaultRemindTime.minute,
-        debounceDuration: settings.debounceDuration,
-        smallScreenWidth: settings.smallScreenWidth,
-        mediumScreenWidth: settings.mediumScreenWidth,
-        maxCharsForTitle: settings.maxCharsForTitle,
-        leftSectionDefaultWidth: settings.leftSectionDefaultWidth,
-        leftSectionMinWidth: settings.leftSectionMinWidth,
-        leftSectionMaxWidth: settings.leftSectionMaxWidth,
-        undoDurationMs: settings.undoDurationMs,
-        reminderTimePrecision: settings.reminderTimePrecision,
-        timeFormat: settings.timeFormat,
-        timeSelecterRangeH: settings.timeSelecterRangeH,
-        myDayStartH: settings.myDayStartH,
-        notifyMinutesBeforeEvent: settings.notifyMinutesBeforeEvent,
+        keepDefaultReminder: initialSettings.current.keepDefaultReminder,
+        defaultRemindTimeHour: initialSettings.current.defaultRemindTime.hour,
+        defaultRemindTimeMinute: initialSettings.current.defaultRemindTime.minute,
+        debounceDuration: initialSettings.current.debounceDuration,
+        smallScreenWidth: initialSettings.current.smallScreenWidth,
+        mediumScreenWidth: initialSettings.current.mediumScreenWidth,
+        maxCharsForTitle: initialSettings.current.maxCharsForTitle,
+        leftSectionDefaultWidth: initialSettings.current.leftSectionDefaultWidth,
+        leftSectionMinWidth: initialSettings.current.leftSectionMinWidth,
+        leftSectionMaxWidth: initialSettings.current.leftSectionMaxWidth,
+        undoDurationMs: initialSettings.current.undoDurationMs,
+        reminderTimePrecision: initialSettings.current.reminderTimePrecision,
+        timeFormat: initialSettings.current.timeFormat,
+        timeSelecterRangeH: initialSettings.current.timeSelecterRangeH,
+        myDayStartH: initialSettings.current.myDayStartH,
+        notifyMinutesBeforeEvent: initialSettings.current.notifyMinutesBeforeEvent,
       });
     }
   };
+
+
+  useEffect(() => {
+    if (hasChanges) {
+      const timeoutId = setTimeout(async () => {
+        await handleSave();
+      }, Constants.DEBOUNCE_DURATION);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [hasChanges, localSettings]);
+
 
   if (isLoading) {
     return <div className="w-full min-h-screen bg-base-100 flex items-center justify-center text-lg text-gray-600">Loading settings...</div>;
@@ -301,10 +335,12 @@ export function SettingsPage(props) {
       <div className="w-full h-full pl-3 pr-3 bg-base-100/90 border-b border-base-300 text-base-content overflow-y-auto">
         {/* Header with Close and Reset Buttons */}
         <div className="flex justify-between items-center mt-4 mb-4">
-          <h2 className="text-2xl font-bold">Set Your Preferences</h2>
+          <h2 className="text-2xl font-bold">Set Your Preferences
+            {hasChanges ? <span className="ml-1 text-base-content">*</span> : null}
+          </h2>
           <div className="flex gap-2">
             {/* Reset to Defaults Button */}
-            {hasChanges &&
+            {/* {settingsChanged &&
               <button
                 type="button"
                 className="btn btn-md btn-ghost"
@@ -313,7 +349,7 @@ export function SettingsPage(props) {
                 title="Undo all changes"
               >
                 <UndoIcon className="h-6 w-6" />
-              </button>}
+              </button>} */}
             <button
               type="button"
               className="btn btn-md btn-ghost gap-2"
@@ -329,7 +365,7 @@ export function SettingsPage(props) {
             <button
               type="button"
               className="btn btn-md btn-ghost"
-              onClick={handleSave}
+              onClick={saveAndClose}
               disabled={isSaving}
               title="Close settings"
             >
@@ -391,7 +427,7 @@ export function SettingsPage(props) {
                         max="23"
                         value={localSettings.defaultRemindTimeHour}
                         onChange={(e) =>
-                          handleInputChange("defaultRemindTimeHour", e.target.value, value == e.target.value)
+                          handleInputChange("defaultRemindTimeHour", e.target.value)
                         }
                         className={`input input-bordered w-20 text-center ${validationErrors.defaultRemindTimeHour ? "input-error" : ""}`}
                       />

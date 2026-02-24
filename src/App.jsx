@@ -28,6 +28,7 @@ function App() {
   const [currentView, setCurrentView] = useState(VIEW_TYPE.Month);
   const [nextPrevText, setNextPrevText] = useState("month");
   const [openSettings, setOpenSettings] = useState(false);
+  const [activePage, setActivePage] = useState("Home");
 
   useEffect(() => {
     async function getLocale() {
@@ -72,9 +73,9 @@ function App() {
     setDayDate(currentDate.getDate());
   }, [monthIndex, year]);
 
-  const openMenu = () => {
-    console.log("Menu Open");
-  }
+  // const openMenu = () => {
+  //   console.log("Menu Open");
+  // }
 
   const handleMonthSelection = (monthIndex) => {
     setMonthIndex(monthIndex);
@@ -87,6 +88,7 @@ function App() {
 
   const handleNext = () => {
     setOpenSettings(false);
+    setActivePage("Home");
     if (currentView === VIEW_TYPE.Month) {
       handleNextMonth();
     } else {
@@ -95,6 +97,7 @@ function App() {
   };
   const handlePrev = () => {
     setOpenSettings(false);
+    setActivePage("Home");
     if (currentView === VIEW_TYPE.Month) {
       handlePrevMonth();
     } else {
@@ -126,6 +129,7 @@ function App() {
   };
   const handleView = (e) => {
     setOpenSettings(false);
+    setActivePage("Home");
     if (currentView === VIEW_TYPE.Month) {
       setCurrentView(VIEW_TYPE.Year);
       setNextPrevText("year");
@@ -144,6 +148,22 @@ function App() {
   const handleNextYear = () => {
     setYear(year + 1);
   };
+  const handleHomeClick = ()=>{
+    const todayDate = new Date();
+    const runningDayDate = todayDate.getDate();
+    const runningMonth = todayDate.getMonth();
+    const runningYear = todayDate.getFullYear();
+    setOpenSettings(false);
+    setActivePage("Home");
+    setMonthIndex(runningMonth);
+    setYear(runningYear);
+    handleMonthSelection(runningMonth);
+  };
+
+  const closeSettings = ()=> {
+    setActivePage("Home");
+    setOpenSettings(false);
+  }
 
   const handleWheelScroll = (event) => {
     console.log("trying to scroll");
@@ -180,12 +200,15 @@ function App() {
         handleView={handleView}
         toggleTheme={toggleTheme}
         theme={theme}
+        activePage={activePage}
+        setActivePage={setActivePage}
         setOpenSettings={setOpenSettings}
-        openMenu={openMenu}
+        handleHomeClick={handleHomeClick}
+        //openMenu={openMenu}
       />
       <div className="flex flex-1 overflow-hidden">
         {
-          openSettings ? <SettingsPage onClose={()=> setOpenSettings(false)} /> :
+          openSettings ? <SettingsPage onClose={()=> closeSettings()} /> :
           currentView == VIEW_TYPE.Month ?
             <Month date={dayDate} month={monthIndex} year={year} />
             :
