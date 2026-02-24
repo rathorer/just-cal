@@ -30,6 +30,7 @@ export function SettingsPage(props) {
         defaultRemindTimeHour: settings.defaultRemindTime.hour,
         defaultRemindTimeMinute: settings.defaultRemindTime.minute,
         debounceDuration: settings.debounceDuration,
+        backgroundShade: settings.backgroundShade,
         smallScreenWidth: settings.smallScreenWidth,
         mediumScreenWidth: settings.mediumScreenWidth,
         maxCharsForTitle: settings.maxCharsForTitle,
@@ -213,6 +214,7 @@ export function SettingsPage(props) {
           localSettings.defaultRemindTimeMinute
         );
         settings.setDebounceDuration(localSettings.debounceDuration);
+        settings.setBackgroundShade(localSettings.backgroundShade);
         settings.setSmallScreenWidth(localSettings.smallScreenWidth);
         settings.setMediumScreenWidth(localSettings.mediumScreenWidth);
         settings.setMaxCharsForTitle(localSettings.maxCharsForTitle);
@@ -286,6 +288,7 @@ export function SettingsPage(props) {
         defaultRemindTimeHour: initialSettings.current.defaultRemindTime.hour,
         defaultRemindTimeMinute: initialSettings.current.defaultRemindTime.minute,
         debounceDuration: initialSettings.current.debounceDuration,
+        backgroundShade: initialSettings.current.backgroundShade,
         smallScreenWidth: initialSettings.current.smallScreenWidth,
         mediumScreenWidth: initialSettings.current.mediumScreenWidth,
         maxCharsForTitle: initialSettings.current.maxCharsForTitle,
@@ -331,8 +334,8 @@ export function SettingsPage(props) {
   }
 
   return (
-    <div className="w-full h-[calc(100vh-3rem)] bg-base-100">
-      <div className="w-full h-full pl-3 pr-3 bg-base-100/90 border-b border-base-300 text-base-content overflow-y-auto">
+    <div className={`w-full h-[calc(100vh-3rem)] bg-${localSettings.backgroundShade}/10`}>
+      <div className="w-full h-full pl-3 pr-3 border-b border-base-300 text-base-content overflow-y-auto">
         {/* Header with Close and Reset Buttons */}
         <div className="flex justify-between items-center mt-4 mb-4">
           <h2 className="text-2xl font-bold">Set Your Preferences
@@ -352,7 +355,7 @@ export function SettingsPage(props) {
               </button>} */}
             <button
               type="button"
-              className="btn btn-md btn-ghost gap-2"
+              className="btn btn-sm btn-ghost gap-2"
               onClick={handleReset}
               disabled={isSaving}
               title="Reset to defaults"
@@ -364,7 +367,7 @@ export function SettingsPage(props) {
             {/* Close Button */}
             <button
               type="button"
-              className="btn btn-md btn-ghost"
+              className="btn btn-sm btn-ghost"
               onClick={saveAndClose}
               disabled={isSaving}
               title="Close settings"
@@ -543,6 +546,33 @@ export function SettingsPage(props) {
               <legend className="legend text-lg">Display Settings</legend>
 
               <div className="grid grid-cols-2 gap-4 text-lg">
+                 {/* Background shade */}
+                <div className="flex items-start">
+                  <label htmlFor="backgroundShade" className="label">
+                    <span className="label-text">Background shade</span>
+                  </label>
+                </div>
+                <div>
+                  <select
+                    id="backgroundShade"
+                    value={localSettings.backgroundShade}
+                    onChange={(e) =>
+                      handleInputChange("backgroundShade", e.target.value)
+                    }
+                    className={`select select-bordered w-full ${validationErrors.backgroundShade ? "select-error" : ""}`}
+                  >
+                    <option value="base-100">Base</option>
+                    <option value="accent">Accent</option>
+                    <option value="error">Red</option>
+                    <option value="success">Green</option>
+                    <option value="blue">Blue</option>
+                    <option value="warning">Yellow</option>
+                    <option value="secondary">Pink</option>
+                    <option value="orange">Orange</option>
+                    <option value="header-teal">Teal</option>
+                  </select>
+                  <span className="text-sm text-gray-600 italic">Select a background shade for main area.</span>
+                </div>
                 {/* Small Screen Width */}
                 <div className="flex items-start">
                   <label htmlFor="smallScreenWidth" className="label">

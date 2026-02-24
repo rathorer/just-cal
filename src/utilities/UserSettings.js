@@ -8,6 +8,7 @@ export class UserSettings {
   #_keepDefaultReminder;
   #_defaultRemindTime;
   #_debounceDuration; // milliseconds
+  #_backgroundShade;
   #_smallScreenWidth; // pixels
   #_mediumScreenWidth; // pixels
   #_maxCharsForTitle;
@@ -26,6 +27,7 @@ export class UserSettings {
     this.#_keepDefaultReminder = true;
     this.#_defaultRemindTime = new ExtractedTime(10, 0, false);
     this.#_debounceDuration = 2000; // milliseconds
+    this.#_backgroundShade = "base-100";
     this.#_smallScreenWidth = 300; // pixels
     this.#_mediumScreenWidth = 700; // pixels
     this.#_maxCharsForTitle = 80;
@@ -52,6 +54,7 @@ export class UserSettings {
         this.#_defaultRemindTime.isApprox
       ),
       debounceDuration: this.#_debounceDuration,
+      
       smallScreenWidth: this.#_smallScreenWidth,
       mediumScreenWidth: this.#_mediumScreenWidth,
       maxCharsForTitle: this.#_maxCharsForTitle,
@@ -77,6 +80,10 @@ export class UserSettings {
 
   get debounceDuration() {
     return this.#_debounceDuration;
+  }
+
+  get backgroundShade() {
+    return this.#_backgroundShade;
   }
 
   get smallScreenWidth() {
@@ -159,6 +166,11 @@ export class UserSettings {
       return false;
     }
     this.#_debounceDuration = value;
+    return true;
+  }
+
+  setBackgroundShade(value) {
+    this.#_backgroundShade = value;
     return true;
   }
 
@@ -325,6 +337,7 @@ export class UserSettings {
         isApprox: this.#_defaultRemindTime.isApprox,
       },
       debounceDuration: this.#_debounceDuration,
+      backgroundShade: this.#_backgroundShade,
       smallScreenWidth: this.#_smallScreenWidth,
       mediumScreenWidth: this.#_mediumScreenWidth,
       maxCharsForTitle: this.#_maxCharsForTitle,
@@ -359,6 +372,8 @@ export class UserSettings {
     }
     if (data.debounceDuration !== undefined)
       settings.setDebounceDuration(data.debounceDuration);
+    if(data.backgroundShade !== undefined)
+      settings.setBackgroundShade(data.backgroundShade);
     if (data.smallScreenWidth !== undefined)
       settings.setSmallScreenWidth(data.smallScreenWidth);
     if (data.mediumScreenWidth !== undefined)
@@ -399,6 +414,7 @@ export class UserSettings {
       defaults.defaultRemindTime.isApprox
     );
     this.#_debounceDuration = defaults.debounceDuration;
+    this.#_backgroundShade = defaults.backgroundShade;
     this.#_smallScreenWidth = defaults.smallScreenWidth;
     this.#_mediumScreenWidth = defaults.mediumScreenWidth;
     this.#_maxCharsForTitle = defaults.maxCharsForTitle;

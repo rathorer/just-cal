@@ -1,17 +1,17 @@
 import JustDate from './../utilities/justDate';
 import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import { Constants } from '../utilities/constants';
-
+import { useUserSettings } from "../contexts/UserSettingsContext";
 
 function Year(props) {
     const year = props.year;
     const prevSelectedMonth = props.month;
     const locale = props.locale;
     const handleMonthSelection = props.onMonthClick;
+    const { settings } = useUserSettings();
     const [leftWidth, setLeftWidth] = useState(Constants.LEFT_SECTION_DEFAULT_WIDTH);
     const [isDragging, setIsDragging] = useState(false);
     const [months, setMonths] = useState([]);
-
     const containerRef = useRef(null);
 
     const monthList = useMemo(() => {
@@ -70,18 +70,18 @@ function Year(props) {
     return (
         <div ref={containerRef} className="h-[calc(100vh-3rem)] flex flex-1 overflow-hidden">
             {/* Left Section - Dynamic width */}
-            <div style={{ width: `${leftWidth}%` }} className="bg-base-100 flex flex-col">
+            <div style={{ width: `${leftWidth}%` }} className={`bg-base-100 flex flex-col bg-gradient-to-tr from-${settings && settings.backgroundShade}/10 to-base-100`}>
                 <div className="flex-1 p-2 pt-0 overflow-y-auto">
                     <div
                         style={{ height: '100%', gridAutoRows: '1fr' }}
                         className="grid grid-cols-3 divide-x divide-y divide-base-content/30 text-base-content/90 border border-base-content/30"
                     >
                         {months.map((month, idx) => {
-                            return <div 
+                            return <div
                                 key={idx}
                                 onClick={() => handleMonthClick(idx)}
                                 className=
-                                {"p-4 flex items-center justify-center font-semibold text-center hover:bg-base-200 hover:cursor-pointer transition-colors" + (idx == prevSelectedMonth? " border-1 !border-info/80": "")}
+                                {"p-4 flex items-center justify-center font-semibold text-center hover:bg-base-200 hover:cursor-pointer transition-colors" + (idx == prevSelectedMonth ? " border-1 !border-info/80" : "")}
                             >{month}</div>
                         })}
                     </div>

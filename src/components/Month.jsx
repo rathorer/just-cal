@@ -7,10 +7,13 @@ import { event } from '@tauri-apps/api';
 import useWindowWidth from './../hooks/useWindowWidth';
 import RightSection from './RightSection';
 import { Constants } from '../utilities/constants';
+import { useUserSettings } from "../contexts/UserSettingsContext";
 
 
 function Month(props) {
   const locale = props.locale;
+
+  const { settings } = useUserSettings();
   const [monthDays, setMonthDays] = useState([]);
   const [weekDays, setWeekDays] = useState([]);
   const [monthStart, setMonthStart] = useState(0);
@@ -183,7 +186,7 @@ function Month(props) {
 
   return (
     <div ref={containerRef} className="h-[calc(100vh-3rem)] flex flex-1 overflow-hidden">
-      <div style={{ width: `${leftWidth}%` }} className="bg-base-100 flex flex-col">
+      <div style={{ width: `${leftWidth}%` }} className={`bg-base-100 flex flex-col bg-gradient-to-tl from-${settings && settings.backgroundShade}/10 to-base-100`}>
         {/* Optional: Inner header or toolbar */}
         <div className="pl-3 bg-base-100/90 p-2 border-b border-base-100 text-base-content">
           <div className="grid grid-cols-7 flex-row">
@@ -224,7 +227,7 @@ function Month(props) {
         className={"w-1 bg-base-content/10 hover:bg-base-content/30 transition-colors cursor-col-resize flex-shrink-0 " + (isDragging ? "bg-primary/50" : "")}
       />
       {/* Right Section - Dynamic width */}
-      <div style={{ width: `${100 - leftWidth}%` }} className="lg:flex lg:flex-col bg-base-200 border-l border-base-200 p-1">
+      <div style={{ width: `${100 - leftWidth}%` }} className="lg:flex lg:flex-col border-l border-base-200 p-1 h-full">
         <RightSection
           year={year}
           month={month}

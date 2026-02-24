@@ -54,5 +54,12 @@ module.exports = {
     base: true,
     styled: true,
     utils: true,
+    safelist: [
+    'bg-base-100', 'bg-base-200', 'bg-base-300', 'bg-blue', 'bg-orange', 'bg-accent',
+    'from-base-100/10', 'from-accent/10', 'from-error/10', 'from-success/10', 'from-blue/10',
+    'from-warning/10', 'from-secondary/10', 'from-orange/10', 'from-header-teal/10',
+    'bg-base-100/10', 'bg-accent/10', 'bg-error/10', 'bg-success/10', 'bg-blue/10', 'bg-warning/10',
+    'bg-secondary/10', 'bg-orange/10', 'bg-header-teal/10'
+  ],
   },
 }

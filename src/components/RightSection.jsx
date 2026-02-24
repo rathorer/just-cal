@@ -5,6 +5,7 @@ import DayAgenda from './DayAgenda';
 import { getReminder } from '../utilities/reminderUtils';
 import { Constants } from '../utilities/constants';
 import JustDate from './../utilities/justDate';
+import { useUserSettings } from "../contexts/UserSettingsContext";
 
 function RightSection(props) {
   const year = props.year;
@@ -18,6 +19,8 @@ function RightSection(props) {
   let dateObj = new Date(year, month, selectedDate);
   let dateAsKey = JustDate.toISOLikeDateString(dateObj);
   //const [currentDate, setCurrentDate] = useState(selectedDate);
+
+  const { settings } = useUserSettings();
   const [date, setDate] = useState(dateObj);
   const [items, setItems] = useState({ [dateAsKey]: undefined });
   const [recentRemoved, setRecentRemoved] = useState({ [dateAsKey]: [] });
@@ -294,7 +297,7 @@ function RightSection(props) {
   };
 
   return (
-    <div className="lg:block bg-base-100/90 border-l border-base-200 text-base-content max-h-full overflow-y-auto">
+    <div className={`lg:block bg-base-100 border-l border-base-200 text-base-content max flex flex-col h-full overflow-y-auto bg-gradient-to-tl from-${settings && settings.backgroundShade}/10 to-base-100`}>
       <DayAgenda key={dateAsKey}
         selectedDateObj={dateObj}
         monthName={monthName}

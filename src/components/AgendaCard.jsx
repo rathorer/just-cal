@@ -137,7 +137,7 @@ const AgendaCard = ({
   }
 
   return (
-    <div key={keyId} className="relative group card bg-base-200/70 shadow-md border border-base-300 mb-1">
+    <div key={keyId} className="relative group card bg-base-200/70 shadow-md border border-base-300 mb-2">
       <div className="card-body px-4 py-2">
         {/* Top icon row */}
         <div className="flex text-xs items-center justify-between">
