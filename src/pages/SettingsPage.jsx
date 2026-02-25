@@ -334,7 +334,7 @@ export function SettingsPage(props) {
   }
 
   return (
-    <div className={`w-full h-[calc(100vh-3rem)] bg-${localSettings.backgroundShade}/10`}>
+    <div className={`w-full h-[calc(100vh-3rem)] bg-base-100/90 bg-gradient-to-tl from-${localSettings && localSettings.backgroundShade}/10 to-base-100`}>
       <div className="w-full h-full pl-3 pr-3 border-b border-base-300 text-base-content overflow-y-auto">
         {/* Header with Close and Reset Buttons */}
         <div className="flex justify-between items-center mt-4 mb-4">
@@ -751,19 +751,24 @@ export function SettingsPage(props) {
                   <input
                     id="debounceDuration"
                     type="number"
-                    min="100"
+                    min="500"
+                    max="5000"
+                    step="100"
                     value={localSettings.debounceDuration}
                     onChange={(e) =>
                       handleInputChange("debounceDuration", e.target.value)
                     }
-                    className={`input input-bordered w-full ${validationErrors.debounceDuration ? "input-error" : ""}`}
+                    className={`input input-bordered w-2/3 ${validationErrors.debounceDuration ? "input-error" : ""}`}
                   />
+                  <span className="text-md text-gray-600 output pl-4 w-1/3">{(localSettings.debounceDuration) / 1000} seconds</span>
+                  <div>
                   <span className="text-sm text-gray-600 italic">Let you type, when you pause for this long, auto saves.</span>
                   {validationErrors.debounceDuration && (
                     <span className="text-md text-error mt-1 block">
                       {validationErrors.debounceDuration}
                     </span>
                   )}
+                  </div>
                 </div>
 
                 {/* Undo Duration */}

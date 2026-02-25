@@ -7,6 +7,7 @@ import MoreActions from "./MoreActions";
 import { extractPlainText } from "../utilities/utils";
 import TimePicker from "./TimePicker";
 import { useRef, useState } from "react";
+import { useUserSettings } from "../contexts/UserSettingsContext";
 
 const AgendaCard = ({
   keyId,
@@ -23,6 +24,7 @@ const AgendaCard = ({
     return new Date(dateTimeISOString).toLocaleTimeString(undefined, { timeStyle: Constants.TIME_FORMAT });
   };
   const DESC_BOX_HEIGHT = 6;
+  const { settings } = useUserSettings();
   const [updatingTime, setUpdatingTime] = useState(false);
   const [updatingReminder, setUpdatingReminder] = useState(false);
   const [minDescHeight, setMinDescHeight] = useState(DESC_BOX_HEIGHT);
@@ -137,7 +139,7 @@ const AgendaCard = ({
   }
 
   return (
-    <div key={keyId} className="relative group card bg-base-200/70 shadow-md border border-base-300 mb-2">
+    <div key={keyId} className={`relative group card bg-base-100/90 shadow-md border border-base-300 mb-2 bg-gradient-to-tl from-${settings && settings.backgroundShade}/10 to-base-100`}>
       <div className="card-body px-4 py-2">
         {/* Top icon row */}
         <div className="flex text-xs items-center justify-between">

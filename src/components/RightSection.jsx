@@ -297,7 +297,7 @@ function RightSection(props) {
   };
 
   return (
-    <div className={`lg:block bg-base-100 border-l border-base-200 text-base-content max flex flex-col h-full overflow-y-auto bg-gradient-to-tl from-${settings && settings.backgroundShade}/10 to-base-100`}>
+    <div className={`lg:block bg-base-100/90 border-l border-base-200 text-base-content max flex flex-col h-full overflow-y-auto bg-gradient-to-tl from-${settings && settings.backgroundShade}/10 to-base-100`}>
       <DayAgenda key={dateAsKey}
         selectedDateObj={dateObj}
         monthName={monthName}

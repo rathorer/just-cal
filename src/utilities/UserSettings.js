@@ -159,9 +159,9 @@ export class UserSettings {
   }
 
   setDebounceDuration(value) {
-    if (!Number.isInteger(value) || value < 100) {
+    if (!Number.isInteger(value) || value < 500 || value > 5000) {
       console.warn(
-        `Invalid debounce duration: ${value}. Must be >= 100ms. Keeping previous value.`
+        `Invalid debounce duration: ${value}. Must be between 0.5 sec to 5 sec. Keeping previous value.`
       );
       return false;
     }
@@ -259,9 +259,9 @@ export class UserSettings {
   }
 
   setUndoDurationMs(value) {
-    if (!Number.isInteger(value) || value < 1000) {
+    if (!Number.isInteger(value) || value < 5000 || value > 120000) {
       console.warn(
-        `Invalid undo duration: ${value}. Must be >= 1000ms. Keeping previous value.`
+        `Invalid undo duration: ${value}. Must be between 5 sec to 2 min. Keeping previous value.`
       );
       return false;
     }

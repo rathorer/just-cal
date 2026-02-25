@@ -210,6 +210,8 @@ function Day(props) {
       const items = getItemsFromUl(ul);
       if (dayItemsChanged(items, existingItems)) {
         setIsDirty(true);
+      } else{
+        setIsDirty(false);
       }
       scheduleSave(ul);
     }
@@ -233,6 +235,8 @@ function Day(props) {
         const items = getItemsFromUl(ul);
         if (dayItemsChanged(items, existingItems)) {
           setIsDirty(true);
+        } else{
+          setIsDirty(false);
         }
       }
       handleSave(ul);
@@ -248,6 +252,8 @@ function Day(props) {
         const items = getItemsFromUl(ul);
         if (dayItemsChanged(items, existingItems)) {
           setIsDirty(true);
+        } else{
+          setIsDirty(false);
         }
         scheduleSave(ul);
       }
@@ -330,7 +336,7 @@ function Day(props) {
     //  missing in last div, 28 index tells the last line has items.
     >
       {date && (<>
-        <a className={"link inline-block p-0 bg-base-200/90 rounded hover:text-accent hover:bg-base-300 " +
+        <a className={"link inline-block p-0 bg-base-100/20 rounded hover:text-accent hover:bg-base-300 " +
           (date && date.getDayName() === "Sunday" ? 'text-error/80' : '')}>
           <h2 className={"text-xl pt-1 pr-2 font-bold flex justify-end " + (isToday ? "bg-info/20": "") +
             (date && date.getDate() === selectedDate ?

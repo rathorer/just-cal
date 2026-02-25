@@ -186,7 +186,7 @@ function Month(props) {
 
   return (
     <div ref={containerRef} className="h-[calc(100vh-3rem)] flex flex-1 overflow-hidden">
-      <div style={{ width: `${leftWidth}%` }} className={`bg-base-100 flex flex-col bg-gradient-to-tl from-${settings && settings.backgroundShade}/10 to-base-100`}>
+      <div style={{ width: `${leftWidth}%` }} className={`bg-base-100/90 flex flex-col bg-gradient-to-tl from-${settings && settings.backgroundShade}/10 to-base-100`}>
         {/* Optional: Inner header or toolbar */}
         <div className="pl-3 bg-base-100/90 p-2 border-b border-base-100 text-base-content">
           <div className="grid grid-cols-7 flex-row">
@@ -214,7 +214,7 @@ function Month(props) {
                     isSelected={isSelected}
                     isToday={isToday} />
                 } else {
-                  return <div key={idx} className="p-0 h-42 flex flex-col"></div>
+                  return <div key={idx} className="p-0 h-full flex flex-col"></div>
                 }
               })}
             </div>
