@@ -1,6 +1,6 @@
 use tauri::{State, Manager, Runtime};
 use tauri_plugin_store::{Store, StoreBuilder};
-use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc, Local};
+use chrono::{DateTime, Local};
 use std::sync::Arc;
 use std::sync::RwLock;
 use std::collections::HashMap;
@@ -124,12 +124,12 @@ pub fn add_store_to_app_state<R: Runtime>(app: &tauri::AppHandle<R>, date: &str,
     
 }
 
-pub fn get_current_store<R: Runtime>(app: &tauri::AppHandle<R>) -> Result<Arc<Store<R>>, String> {
-    let store_manager = get_store_manager(app);
-    let stores_lock = store_manager.stores.read().unwrap();
-    if let Some(store) = stores_lock.get("current") {
-        Ok(store.clone())
-    } else {
-        Err("Current store not found".to_string())
-    }
-}
+// pub fn get_current_store<R: Runtime>(app: &tauri::AppHandle<R>) -> Result<Arc<Store<R>>, String> {
+//     let store_manager = get_store_manager(app);
+//     let stores_lock = store_manager.stores.read().unwrap();
+//     if let Some(store) = stores_lock.get("current") {
+//         Ok(store.clone())
+//     } else {
+//         Err("Current store not found".to_string())
+//     }
+// }

@@ -1,14 +1,13 @@
-use chrono::{DateTime, Datelike, NaiveDate, NaiveDateTime, Local, Utc, Weekday};
+use chrono::{DateTime, Datelike, Local, NaiveDate, Weekday};
 use serde::Serialize;
 use std::convert::TryFrom;
-use tauri::{Wry, AppHandle, Manager, State};
-mod storage_repo;
-mod store;
+use tauri::{AppHandle, Manager, Wry};
 mod models;
 mod settings_repo;
+mod storage_repo;
+mod store;
 
-use crate::store::{add_store_to_app_state, setup_new_store, get_or_reload_store};
-
+use crate::store::{add_store_to_app_state, get_or_reload_store, setup_new_store};
 
 #[derive(Serialize, Debug, Clone)]
 enum ItemState {
@@ -41,19 +40,15 @@ struct DayItem {
     status: ItemState,
 }
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-// #[tauri::command]
-// fn greet(name: &str) -> String {
-//     format!("Hello, {}! You've been greeted from Rust!", name)
-// }
 #[tauri::command]
 fn update_store(date: String, app: AppHandle<Wry>) {
     println!("Updating store for date: {}", date);
-    
+
     // Get store from AppState, with automatic fallback to disk and creation of new store if needed
     match get_or_reload_store(&app, &date) {
         Ok(_store) => {
             println!("Store loaded successfully for date: {}", date);
-        },
+        }
         Err(e) => {
             println!("Error loading store for date {}: {}", date, e);
         }
@@ -61,7 +56,7 @@ fn update_store(date: String, app: AppHandle<Wry>) {
 }
 
 #[tauri::command]
-fn fetch_day_items(date: &str) -> Vec<DayItem> {
+fn fetch_random_day_items(date: &str) -> Vec<DayItem> {
     // Parse the date part from the string to get date components
     println!("in backend..fetching day items..{:?}", date);
     let date_part = &date[0..10]; // Assuming format is YYYY-MM-DDTHH:MM:SSZ
@@ -70,9 +65,9 @@ fn fetch_day_items(date: &str) -> Vec<DayItem> {
     let day = naive_date.day();
     let weekday = naive_date.weekday();
     let mut count: usize = 5;
-    if weekday == Weekday::Sun{
+    if weekday == Weekday::Sun {
         count = 0;
-    } else{
+    } else {
         count = (day % 6) as usize;
     }
     let mut items_vec: Vec<DayItem> = Vec::with_capacity(count);
@@ -81,20 +76,20 @@ fn fetch_day_items(date: &str) -> Vec<DayItem> {
         String::from("AI-driven content writing application"),
         String::from("Canvas-based photo viewer"),
         String::from("A simple table calendar just cal"),
-        String::from("MS Extensions posts")
+        String::from("MS Extensions posts"),
     ];
 
-     for i in 0..count {
+    for i in 0..count {
         let task_idx: usize = i % 5;
-        let mut status: ItemState = if i > 5 { 
-            ItemState::Pending 
-        } else { 
-            ItemState::try_from(i % 4).expect("Modulus operation should result in a valid state") 
-        }; 
+        let mut status: ItemState = if i > 5 {
+            ItemState::Pending
+        } else {
+            ItemState::try_from(i % 4).expect("Modulus operation should result in a valid state")
+        };
         if i > 7 {
             status = ItemState::Discarted;
         }
-        let task = &tasks[task_idx];  
+        let task = &tasks[task_idx];
         let obj = DayItem {
             id: i as u32,
             item: format!("{} - {}", task, i),
@@ -115,16 +110,14 @@ pub fn run() {
         .setup(|app: &mut tauri::App| {
             // Initialize and manage the StoreManager first
             app.manage(store::initialize_store_manager::<Wry>());
-            
+
             // Create a new store or load the existing one
             // this also put the store in the app's resource table
             // so your following `store` calls (from both Rust and JS)
             // will reuse the same store.
-            let app_dir = app.path().app_data_dir()
-                .map_err(|e| e.to_string())?;
+            let app_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
 
-            std::fs::create_dir_all(&app_dir)
-                .map_err(|e| e.to_string())?;
+            std::fs::create_dir_all(&app_dir).map_err(|e| e.to_string())?;
 
             let now_local: DateTime<Local> = Local::now();
             let current_date = now_local.format(store::DATE_FORMAT).to_string();
@@ -135,8 +128,9 @@ pub fn run() {
             store.close_resource();
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![fetch_day_items, 
-            update_store, 
+        .invoke_handler(tauri::generate_handler![
+            fetch_random_day_items,
+            update_store,
             storage_repo::get_items_for_date,
             storage_repo::get_items_for_month,
             storage_repo::save_items_for_date,
@@ -144,7 +138,8 @@ pub fn run() {
             storage_repo::update_single_item_of_date,
             storage_repo::delete_items_for_date,
             settings_repo::get_user_settings,
-            settings_repo::save_user_settings])
+            settings_repo::save_user_settings
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

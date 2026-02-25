@@ -1,43 +1,11 @@
 use crate::{
-    models::{Day, Item},
+    models::{DayItem, Item},
     store::{self, StoreManager},
-    DayItem,
 };
-use chrono::{DateTime, Datelike, Local, NaiveDate, NaiveDateTime, Utc, Weekday};
-use serde::{Deserialize, Serialize};
-use std::sync::Mutex;
+use chrono::{DateTime, Local, Utc};
 use std::sync::Arc;
-use tauri::{AppHandle, EventLoopMessage, Manager, Runtime, State, Wry};
-use tauri_plugin_store::{Store, StoreBuilder, StoreExt};
-
-const STORE_FILE: &str = "db_justcal.json";
-const USERS_KEY: &str = "users";
-
-// async fn get_current_store<R: Runtime>(app: &AppHandle<Wry>) -> Result<Store<R>, String> {
-//     let mut store = StoreBuilder::new(app, STORE_FILE)
-//         .build()
-//         .map_err(|e| e.to_string())?;
-
-//     // Load existing data or create empty
-//     store.reload().map_err(|e| e.to_string())?;
-//     //store.save().map_err(|e| e.to_string())?;
-//     Ok(store)
-// }
-// async fn get_month_store(app: &AppHandle<Wry>, date: &str) -> Result<Store<Wry>, String> {
-//     let filename = get_store_filename(date);
-//     let mut store = StoreBuilder::new(app, &filename)
-//         .build()
-//         .map_err(|e| e.to_string())?;
-
-//     store.reload().map_err(|e| e.to_string())?; // creates if not exists
-//     Ok(store)
-// }
-// fn get_store(state: tauri::State<'_, Mutex<AppState>>) -> u32 {
-//     // Lock the mutex to get immutable access
-//     let state = app.state::<Mutex<>>();
-//     let app_state = state.lock().unwrap();
-//     app_state.counter
-// }
+use tauri::{AppHandle, Manager, State, Wry};
+use tauri_plugin_store::{Store};
 
 fn convert_date_to_key(date: String) -> String {
     // Date format is YYYY-MM-DDTHH:MM:SSZ when passed from frontend
@@ -46,7 +14,7 @@ fn convert_date_to_key(date: String) -> String {
     date_part.to_string()
 }
 fn convert_date_to_month_key(date: String) -> String {
-    // Date format is YYYY-MM-DDTHH:MM:SSZ when passed from frontend
+    // Date YYYY-MM-DDTHH:MM:SSZ and month key is MM-YYYY
     store::date_to_month_key(&date)
 }
 
@@ -79,10 +47,6 @@ fn get_store_with_fallback(
     }
 }
 
-// #[derive(Serialize, Deserialize, Clone, Debug)]
-// pub struct StorageService{
-//     data: Vec<String>
-// }
 
 // Get for one date
 #[tauri::command]
@@ -90,8 +54,6 @@ pub async fn get_items_for_date(
     app: AppHandle<Wry>,
     date: DateTime<Utc>,
 ) -> Result<Vec<Item>, String> {
-    let locale_datetime: DateTime<Local> = DateTime::from(date);
-    let locale_date_str = locale_datetime.to_string();
 
     let store_manager = app.state::<StoreManager<Wry>>();
     let (locale_date_str, date_key, month_key) = parse_date_keys(date);

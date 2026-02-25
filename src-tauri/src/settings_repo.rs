@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use serde_json::Value;
+use std::path::PathBuf;
 use tauri::{AppHandle, Manager, Wry};
 use tauri_plugin_store::StoreExt;
 
@@ -15,14 +15,14 @@ fn get_file_location(app: &AppHandle<Wry>) -> Result<PathBuf, String> {
 /// Returns an empty string if the settings file doesn't exist.
 /// The frontend can parse this string into JSON.
 #[tauri::command]
-pub async fn get_user_settings(
-    app: AppHandle<Wry>,
-) -> Result<Value, String> {
-    
+pub async fn get_user_settings(app: AppHandle<Wry>) -> Result<Value, String> {
     let file_path = get_file_location(&app)?;
     // Check if the settings file exists
     if !file_path.exists() {
-        println!("Settings file does not exist at {:?}, returning empty string", file_path);
+        println!(
+            "Settings file does not exist at {:?}, returning empty string",
+            file_path
+        );
         return Ok(serde_json::json!({})); // Return empty json if no file
     }
 
@@ -31,8 +31,8 @@ pub async fn get_user_settings(
 
     // Get all entries from the store and convert to JSON
     let entries = store.entries();
-    let json=
-        serde_json::to_value(&entries).map_err(|e| format!("Failed to serialize settings: {}", e))?;
+    let json = serde_json::to_value(&entries)
+        .map_err(|e| format!("Failed to serialize settings: {}", e))?;
 
     println!("Retrieved settings: {}", json);
     Ok(json)
@@ -42,14 +42,12 @@ pub async fn get_user_settings(
 /// If the settings file doesn't exist, it will be created.
 /// If it exists, it will be updated with the new settings.
 #[tauri::command]
-pub async fn save_user_settings(
-    app: AppHandle<Wry>,
-    settings: Value,
-) -> Result<(), String> {
+pub async fn save_user_settings(app: AppHandle<Wry>, settings: Value) -> Result<(), String> {
     let file_path = get_file_location(&app)?;
-    
+
     // Convert Value to Map - assuming it's an object
-    let settings_map = settings.as_object()
+    let settings_map = settings
+        .as_object()
         .ok_or("Settings must be a JSON object")?
         .clone();
 

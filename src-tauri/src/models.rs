@@ -1,8 +1,7 @@
-
-use serde::{Serialize, Deserialize};
-use chrono::{NaiveDate, NaiveDateTime, DateTime, Utc};
-use std::default::Default;
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
+use std::default::Default;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[repr(u8)]
@@ -24,8 +23,6 @@ impl TryFrom<u8> for ItemState {
             3 => Ok(ItemState::Discarted),
             _ => Err(format!("Invalid UserRole integer: {}", value)),
         }
-        // Alternative using From trait and `as` cast (less safe for invalid values)
-        // Ok(unsafe { std::mem::transmute(value) })
     }
 }
 
@@ -37,19 +34,12 @@ pub struct Item {
     description: String,
     status: ItemState,
     time: Option<DateTime<Utc>>,
-    reminder: Option<DateTime<Utc>>
+    reminder: Option<DateTime<Utc>>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct Day {
-    id: NaiveDate,
-    day: u32,
-    month: u32,
-    year: u32,
-    items: Vec<Item>,
+pub struct DayItem {
+    id: u32,
+    title: String,
+    status: ItemState,
 }
-
-// match datetime {
-//     Some(dt) => println!("The datetime is: {}", dt),
-//     None => println!("The timestamp was invalid"),
-// }

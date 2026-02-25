@@ -227,7 +227,7 @@ function Month(props) {
         className={"w-1 bg-base-content/10 hover:bg-base-content/30 transition-colors cursor-col-resize flex-shrink-0 " + (isDragging ? "bg-primary/50" : "")}
       />
       {/* Right Section - Dynamic width */}
-      <div style={{ width: `${100 - leftWidth}%` }} className="lg:flex lg:flex-col border-l border-base-200 p-1 h-full">
+      <div style={{ width: `${100 - leftWidth}%` }} className="lg:flex lg:flex-col border-l border-base-200 p-0 h-full">
         <RightSection
           year={year}
           month={month}

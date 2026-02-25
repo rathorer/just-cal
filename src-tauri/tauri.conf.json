@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "just-cal",
+  "productName": "Just Calendar",
   "version": "0.1.0",
   "identifier": "com.just-cal",
   "build": {
@@ -22,6 +22,12 @@
     }
   },
   "bundle": {
+    "publisher": "just-cal.com",
+    "windows": {
+      "webviewInstallMode": {
+        "type": "embedBootstrapper"
+      }
+    },
     "active": true,
     "targets": "all",
     "icon": [
