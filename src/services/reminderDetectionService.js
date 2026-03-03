@@ -1,8 +1,8 @@
-import { extractTime } from "./eventTimeDetectionService";
+import { getSpecifiedTime } from "./eventTimeDetectionService";
 import { parseReminder } from "../capabilities/reminderDetection"
 import { memoize } from "../utilities/utils";
-import { Constants } from "./constants";
-import { ExtractedTime } from "./entities";
+import { Constants } from "../utilities/constants";
+import { ExtractedTime } from "../utilities/entities";
 
 /**
  * 
@@ -10,31 +10,29 @@ import { ExtractedTime } from "./entities";
  * @returns {Date} datetime object 
  */
 function getReminderPlain(text) {
-    //Check for reminder
     let reminder = parseReminder(text);
-    //try to get if there is any time specified in text.
-    let extractedTime = extractTime(text);
-
     let reminderTime, eventTime = null;
+    let extractedTime = getSpecifiedTime(text);
+
     if (extractedTime && extractedTime.confidence > 0.6) {
-        eventTime = extractTime;
+        eventTime = extractedTime;
     }
     if (reminder.isReminder) {
         reminderTime = reminder.time || Constants.DEFAULT_REMIND_TIME;
-        //if there is a reminder and event time is same as it,
-        // extractedTime was nothing but reminder time only.
-        if(reminder.time == eventTime){
+        if (reminder.time == extractedTime) {
             eventTime = null;
         }
     } else if (eventTime) {
+        //We found exact time of event, so set reminder 15 min early.
         reminderTime = new ExtractedTime(extractedTime.hour,
             extractedTime.minute - Constants.NOTIFY_MINUTES_BEFORE_EVENT,
             extractedTime.isApprox,
             extractedTime.confidence);
-    } else{
+    }
+    else {
         reminderTime = Constants.DEFAULT_REMIND_TIME;
     }
-    
+
     return { reminder: reminderTime, event: eventTime };
 }
 const getReminder = memoize(getReminderPlain);

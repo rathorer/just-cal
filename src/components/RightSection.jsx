@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { invoke } from "@tauri-apps/api/core";
 import useCache from '../hooks/useCache';
 import DayAgenda from './DayAgenda';
-import { getReminder } from '../utilities/reminderUtils';
+import { getReminder } from '../services/reminderDetectionService';
 import { Constants } from '../utilities/constants';
 import JustDate from './../utilities/justDate';
 import { useUserSettings } from "../contexts/UserSettingsContext";

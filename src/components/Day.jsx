@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, memo } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Constants } from "../utilities/constants";
 import CheckIcon from "./icons/check";
-import { getReminder } from "../utilities/reminderUtils";
+import { getReminder } from "../services/reminderDetectionService";
 import { useUserSettings } from "../contexts/UserSettingsContext";
 
 //import { DayPicker } from "react-day-picker";
