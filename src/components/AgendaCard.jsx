@@ -89,19 +89,19 @@ const AgendaCard = ({
     console.log('using sanitized html: ', html.innerText);
     if (html) {
       const htmlNode = stringToNode(html);
-      let nextTitle;
+      let newTitle;
       if (htmlNode.nodeType === Node.ELEMENT_NODE) {
-        nextTitle = htmlNode.innerText;
+        newTitle = htmlNode.innerText;
       } else if (htmlNode.nodeType === Node.TEXT_NODE) {
-        nextTitle = htmlNode.nodeValue;
+        newTitle = htmlNode.nodeValue;
       } else {
         console.error("Recieved unknown node from content editable.", html);
       }
 
-      if (nextTitle.length === 0) {
+      if (newTitle.length === 0) {
         return;
       }
-      onItemUpdate?.(index, { title: nextTitle, user_input: nextTitle });
+      onItemUpdate?.(index, { title: newTitle, user_input: newTitle });
     }
   };
 

@@ -16,6 +16,7 @@ export const ContentEditable = forwardRef(({
   const editorRef = useRef();
   const isFocused = useRef(false);
   const lastHtml = useRef("");
+  const initialHTMLRef = useRef(null);
   
   // Forward the internal ref to the parent
   useEffect(() => {
@@ -34,6 +35,7 @@ export const ContentEditable = forwardRef(({
     }
     const rawHTML = renderToStaticMarkup(children);
     const sanitized = sanitizeHTML(rawHTML);
+    initialHTMLRef.current = sanitized;
     if (ref.current.innerHTML !== sanitized) {
       ref.current.innerHTML = sanitized;
     }
@@ -82,6 +84,9 @@ export const ContentEditable = forwardRef(({
     const sanitized = sanitizeHTML(
       ref.current.innerHTML
     )
+    if(sanitized === initialHTMLRef.current){
+      return;
+    }
     ref.current.innerHTML = sanitized
     //lastHtml.current = sanitized
     onBlur?.(sanitized)

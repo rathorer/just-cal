@@ -77,19 +77,57 @@ pub async fn get_items_for_month(
     app: AppHandle<Wry>,
     manager: State<'_, StoreManager<Wry>>,
     date: DateTime<Utc>,
-) -> Result<Vec<(String, Vec<String>)>, String> {
+) -> Result<Vec<DayItem>, String> {
     
     let (_locale_date_str, _key,    store_key) = parse_date_keys(date);
     let store = get_store_with_fallback(Some(&app), &manager, &store_key, &_locale_date_str)?;
 
-    let month_items: Vec<(String, Vec<String>)> = store
+    let month_items: Vec<DayItem> = store
         .entries()
         .into_iter()
         .filter_map(
             |(k, v)| match serde_json::from_value::<Vec<Item>>(v.clone()) {
                 Ok(items) => {
-                    let inputs = items.into_iter().map(|item| item.user_input).collect();
-                    Some((k, inputs))
+                    let day_items: Vec<DayItem> = items.into_iter().map(|item| DayItem {
+                        id: item.id,
+                        title: item.title,
+                        user_input: item.user_input,
+                        status: item.status,
+                    }).collect();
+                    Some(day_items)
+                }
+                Err(e) => {
+                    println!(
+                        "Deserialization failed for key {}: {:?}, value: {:?}",
+                        k, e, v
+                    );
+                    None
+                }
+            },
+        )
+        .flatten() // Flatten Vec<Vec<DayItem>> to Vec<DayItem>
+        .collect();
+
+    Ok(month_items)
+}
+
+#[tauri::command]
+pub async fn get_full_items_for_month(
+    app: AppHandle<Wry>,
+    manager: State<'_, StoreManager<Wry>>,
+    date: DateTime<Utc>,
+) -> Result<Vec<(String, Vec<Item>)>, String> {
+    
+    let (_locale_date_str, _key,    store_key) = parse_date_keys(date);
+    let store = get_store_with_fallback(Some(&app), &manager, &store_key, &_locale_date_str)?;
+
+    let month_items: Vec<(String, Vec<Item>)> = store
+        .entries()
+        .into_iter()
+        .filter_map(
+            |(k, v)| match serde_json::from_value::<Vec<Item>>(v.clone()) {
+                Ok(items) => {
+                    Some((k, items))
                 }
                 Err(e) => {
                     println!(
@@ -108,6 +146,7 @@ pub async fn get_items_for_month(
 // Save/Update one date
 #[tauri::command]
 pub async fn save_items_for_date(
+    app: AppHandle<Wry>,
     manager: State<'_, StoreManager<Wry>>,
     date: DateTime<Utc>,
     items: Vec<Item>,
@@ -115,7 +154,13 @@ pub async fn save_items_for_date(
     let (_locale_date_str, key, store_key) = parse_date_keys(date);
     //println!("in backend save items for date {}", store_key);
     let stores = manager.stores.read().unwrap();
-    let store = stores.get(&store_key).ok_or("Store not found")?;
+    let store = if let Some(s) = stores.get(&store_key) {
+        s.clone()
+    } else {
+        drop(stores);
+        // Create a new store if it doesn't exist
+        store::setup_new_store(&app, &_locale_date_str)?
+    };
     store.set(
         key,
         serde_json::to_value(&items).map_err(|e| e.to_string())?,

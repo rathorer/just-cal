@@ -6,6 +6,8 @@ import { getReminder } from '../services/reminderDetectionService';
 import { Constants } from '../utilities/constants';
 import JustDate from './../utilities/justDate';
 import { useUserSettings } from "../contexts/UserSettingsContext";
+import { convertUserInputToAgendaItem } from '../services/userInputDetectionsService';
+import { getTitleOfAText } from '../services/titleDetectionService';
 
 function RightSection(props) {
   const year = props.year;
@@ -45,9 +47,9 @@ function RightSection(props) {
           //Only fetch if it was not already fetched.
           if (!items[selectedDateAsKey]) {
 
-            console.log('calling get_items_for_date.', jsonDate);
+            //console.log('calling get_items_for_date.', jsonDate);
             const dayItems = await invoke("get_items_for_date", { date: jsonDate });
-            console.log("Fetched selected day items:", dayItems);
+            //console.log("Fetched selected day items:", dayItems);
 
             setItems({ ...items, [selectedDateAsKey]: dayItems });
           }
@@ -63,14 +65,18 @@ function RightSection(props) {
     fetchDayItems();
   }, [date, selectedDate]);
 
+  //TODO: Merge is doing extra work here,
+  // anything we receive from parent (basically Day comp) can directly be replaced instead of merge.
+  //In Day we already merged new and old and changed item and we updated DB, so updatedAgenda should
+  // be source of truth. But this doesn't harm as desc and status will never be updated from Day.
   function mergeCurrentAndUpdatedAgendas(currentAgenda, updatedAgenda) {
-    const mergedAgenda = currentAgenda.map(item1 => {
-      const existingItem = updatedAgenda.find(item2 => item2.id === item1.id);
+    const mergedAgenda = currentAgenda.map(currentItem => {
+      const existingItem = updatedAgenda.find(updatedItem => updatedItem.id === currentItem.id);
       // In case the updatedAgenda coming from Day, it may not have desc so skip and update other things.
-      // So we update only title and 
-      let currDescription = item1.description;
-      let currStatus = item1.status;
-      let updatedItem = existingItem ? { ...item1, ...existingItem } : item1;
+      // So we update everything except desc and status (which is edited only from right section); 
+      let currDescription = currentItem.description;
+      let currStatus = currentItem.status;
+      let updatedItem = existingItem ? { ...currentItem, ...existingItem } : currentItem;
       updatedItem.description = currDescription;
       updatedItem.status = currStatus;
       return updatedItem;
@@ -100,7 +106,7 @@ function RightSection(props) {
       const currentItems = prevItems[selectedDateKey] || [];
       return {
         ...prevItems,
-        [selectedDateKey]: mergeCurrentAndUpdatedAgendas(currentItems, lastAgendaUpdate.agenda)
+        [selectedDateKey]: lastAgendaUpdate.agenda
       };
     });
     //setItems({...items, [selectedDateKey]: mergedAgenda});
@@ -132,7 +138,7 @@ function RightSection(props) {
       }
     }, 2000);
     return () => clearInterval(interval);
-  }, [dateAsKey, recentRemoved.length]);
+  }, [dateAsKey, recentRemoved.length, recentRemoved]);
 
   const updateItemToBackend = async function (agendaItem) {
     try {
@@ -145,37 +151,16 @@ function RightSection(props) {
     }
   }
 
-  function convertUserInputToAgenda(currentDate, userInput) {
+  function prepareAgendaItem(currentDate, userInput) {
     if (!userInput || userInput.trim() === "") {
       return null;
     }
+
     let currentDateAsKey = JustDate.toISOLikeDateString(currentDate);
-    let extractedTimes = getReminder(userInput);
-    let reminderTime = extractedTimes.reminder;
-    currentDate.setHours(reminderTime.hour);
-    currentDate.setMinutes(reminderTime.minute);
-    let reminderDateTimeStr = currentDate.toISOString();
-    let eventDateTimeStr = null;
-    if (extractedTimes.event) {
-      currentDate.setHours(extractedTimes.event.hour);
-      currentDate.setMinutes(extractedTimes.event.minute);
-      eventDateTimeStr = currentDate.toISOString();
-    }
-    let multipleSentences = userInput.match(Constants.SENTENCE_DETECTION);
-    let title = multipleSentences ? multipleSentences[0] : userInput;
-    let description = userInput;
-    if (title.length > Constants.MAX_CHARS_FOR_TITLE) {
-      title = title.substring(0, Constants.MAX_CHARS_FOR_TITLE);
-    }
-    return {
-      id: items[currentDateAsKey].length + 1,
-      user_input: userInput,
-      title: title,
-      description: description,
-      status: "Pending",
-      time: eventDateTimeStr,
-      reminder: reminderDateTimeStr
-    }
+    let lastId = items[currentDateAsKey].reduce((maxId, x) => x.id > maxId? x.id: maxId, 0);
+    let title = getTitleOfAText(userInput);
+    let description = userInput.length > Constants.MAX_CHARS_FOR_TITLE ? userInput: "";
+    return convertUserInputToAgendaItem(currentDate, userInput, ++lastId, title, "Pending", description);
   }
 
   const handleRemove = function (dateKey, index, e) {
@@ -187,7 +172,7 @@ function RightSection(props) {
     const currentRecentRemoved = recentRemoved[dateKey] ? [...recentRemoved[dateAsKey]] : [];
     currentRecentRemoved.push(removed);
     setRecentRemoved({ ...recentRemoved, [dateKey]: currentRecentRemoved });
-    handleAgendaRemoveParent(dateKey, index);
+    handleAgendaRemoveParent(dateKey, removedItem.id);
   };
 
   const handleUndo = function (dateKey, e) {
@@ -210,22 +195,22 @@ function RightSection(props) {
 
   const handleAgendaEdit = function (dateKey, index, patch) {
     let prevItems = { ...items };
-    const selectedAgendaItems = prevItems[dateKey] || [];
-    const existingItem = selectedAgendaItems[index];
-    if (existingItem) {
-      const newItem = { ...existingItem, ...patch };
-      const newItems = [...selectedAgendaItems];
-      newItems[index] = newItem;
-      handleAgendaEditParent(dateKey, index, newItem);
-      setItems({ ...prevItems, [dateKey]: newItems });
-      updateItemToBackend(newItem);
+    const dayItems = prevItems[dateKey] || [];
+    const oldItem = dayItems[index];
+    if (oldItem) {
+      const updatedItem = { ...oldItem, ...patch };
+      const dayItemsClone = [...dayItems];
+      dayItemsClone[index] = updatedItem;
+      handleAgendaEditParent(dateKey, updatedItem.id, updatedItem);
+      setItems({ ...prevItems, [dateKey]: dayItemsClone });
+      updateItemToBackend(updatedItem);
     };
   }
 
   const handleNewAgendaItem = function (userInput) {
     let selectedDateAsKey = JustDate.toISOLikeDateString(date);
     let currentItems = [...items[selectedDateAsKey]];
-    let newAgendaItem = convertUserInputToAgenda(date, userInput);
+    let newAgendaItem = prepareAgendaItem(date, userInput);
     if (newAgendaItem) {
       currentItems.push(newAgendaItem);
       setItems({ ...items, [selectedDateAsKey]: currentItems });

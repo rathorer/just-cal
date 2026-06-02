@@ -63,7 +63,7 @@ export function parseReminder(inputText) {
   if (allMatches.length > 1) {
     //reminder sentence has more than one time. Lets try nearby word search.
     let matches = allMatches.length;
-    
+
     nearByWordsMatch = nearByWords.match(TIME_REGEX_GLOBAL).length;
     //In most cases if there are 2 times, the lower one should be the reminder.
     //If nearby words also find more than 1 time, lets take the lower one
@@ -87,15 +87,16 @@ export function parseReminder(inputText) {
   } else {
     match = reminderSentence.match(TIME_REGEX);
   }
+
+
   let confidence = 0.7;
+  if (!lowestTime && (!match || !match.groups)) {
+    return { isReminder: false, time: null, confidence };
+  }
+
   const { hour, minute } = lowestTime || getTimeParts(match);
-  if (match) {
-    if (!match || !match.groups) {
-      return { isReminder: true, time: null, confidence: 0.9 };
-    }
-    if (match && nearByWordsMatch && match.index === nearByWordsMatch.index) {
-      confidence = 0.95;
-    }
+  if (match && nearByWordsMatch && match.index === nearByWordsMatch.index) {
+    confidence = 0.95;
   }
 
   // Final validation

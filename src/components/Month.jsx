@@ -26,13 +26,12 @@ function Month(props) {
   const [isDragging, setIsDragging] = useState(false);
   const [isLoadingItems, setIsLoadingItems] = useState(false);
   const containerRef = useRef(null);
+  const monthItemsRef = useRef(monthItems); // Always has latest monthItems
   const width = useWindowWidth();
 
   const todaysDate = new Date();
   const month = JustDate.getMonthIndex(props.month);
-  console.log('month', month, 'prop-month', props.month);
   const year = props.year;
-
 
   const handleSelectedDate = useCallback((date) => {
     if (Number.isInteger(date)) {
@@ -87,11 +86,10 @@ function Month(props) {
       setIsLoadingItems(true);
       let utcDateStr = date.toISOString();
       try {
-        console.log('fetching items for month', utcDateStr);
-        let items = await invoke("get_items_for_month", { date: utcDateStr });
+        let items = await invoke("get_full_items_for_month", { date: utcDateStr });
         if (items && items.length) {
           let itemsAsObj = Object.fromEntries(items);
-          console.log('get_items_for_month', itemsAsObj);
+          //console.log('get_full_items_for_month', itemsAsObj);
           setMonthItems(itemsAsObj);
         } else {
           setMonthItems({});
@@ -104,48 +102,60 @@ function Month(props) {
     fetchMonthItems(date);
   }, [year, month]);
 
-  const handleRemoveAgendaByRightSection = useCallback((dateKey, index) => {
+  // Keep ref in sync with state
+  useEffect(() => {
+    monthItemsRef.current = monthItems;
+  }, [monthItems]);
+
+  const handleRemoveAgendaByRightSection = useCallback((dateKey, id) => {
     //This will be called via right section, when user updates Day using right section.
     //let dateAsKey = JustDate.toISOLikeDateString(new Date(year, month, day));
-
+    let index = monthItemsRef.current[dateKey].findIndex(i => i.id === id);
+    console.log('removing item using right section. ', index);
     setMonthItems((currItems) => {
       const prevItems = currItems[dateKey] || [];
       const newItems = [...prevItems];
       newItems.splice(index, 1);
       return { ...currItems, [dateKey]: newItems };
     });
-  }, [year, month]);
+  }, []);
+
   const handleAddAgendaByRightSection = useCallback((day, agenda, index = undefined) => {
     //This will be called via right section, when user updates Day using right section.
     let dateAsKey = JustDate.toISOLikeDateString(new Date(year, month, day));
-
+    console.log("adding item by right section.");
     setMonthItems((currItems) => {
       const prevItems = currItems[dateAsKey] || [];
       let newItems; 
       if(index === undefined){
-        newItems = [...prevItems, agenda.user_input];
+        newItems = [...prevItems, agenda];
       } else{
         newItems = [...prevItems];
-        newItems.splice(index, 0, agenda.user_input);
+        newItems.splice(index, 0, agenda);
       }
       return { ...currItems, [dateAsKey]: newItems };
     });
   }, [year, month]);
 
-  const handleEditAgendaByRightSection = useCallback((dateKey, index, updatedAgenda) => {
-    //This will be called via right section, when user updates Day using right section.
+  const handleEditAgendaByRightSection = useCallback((dateKey, id, updatedAgenda) => {
+    //This will be called by right section, when user updates Day using right section.
+    let index = monthItemsRef.current[dateKey].findIndex(x=> x.id === id);
+    console.log('updating item using right section. ', index);
     setMonthItems((currItems) => {
       const prevItems = currItems[dateKey] || [];
       const newItems = [...prevItems];
-      newItems[index] = updatedAgenda.user_input;
+      newItems[index] = updatedAgenda;
       return { ...currItems, [dateKey]: newItems };
     });
-  }, [year, month]);
+  }, []);
 
   const handleAgendaUpdateByDay = useCallback((date, agenda) => {
     let updateDateKey = JustDate.toISOLikeDateString(date);
+    console.log('updated item list from day.', agenda);
     setLastAgendaUpdate({ dateKey: updateDateKey, agenda });
-  }, []);
+    // Always use the latest monthItems from ref, not closure
+    setMonthItems({...monthItemsRef.current, [updateDateKey]: agenda});
+  }, []); // Empty deps - ref always has latest data
 
   const isSunday = function (day, index) {
     let isSun = (day.toLowerCase() === "sunday"

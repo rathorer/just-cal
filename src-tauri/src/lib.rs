@@ -44,13 +44,14 @@ struct DayItem {
 fn update_store(date: String, app: AppHandle<Wry>) {
     println!("Updating store for date: {}", date);
 
-    // Get store from AppState, with automatic fallback to disk and creation of new store if needed
+    // Get store from AppState, with automatic fallback to disk, if no store on disk, 
+    // We are not creating at this point.
     match get_or_reload_store(&app, &date) {
         Ok(_store) => {
             println!("Store loaded successfully for date: {}", date);
         }
         Err(e) => {
-            println!("Error loading store for date {}: {}", date, e);
+            println!("No store for date: {}: {}", date, e);
         }
     }
 }
@@ -133,6 +134,7 @@ pub fn run() {
             update_store,
             storage_repo::get_items_for_date,
             storage_repo::get_items_for_month,
+            storage_repo::get_full_items_for_month,
             storage_repo::save_items_for_date,
             storage_repo::delete_single_item_of_date,
             storage_repo::update_single_item_of_date,
