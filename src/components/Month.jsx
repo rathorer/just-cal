@@ -213,7 +213,8 @@ function Month(props) {
                   let dateKey = JustDate.toISOLikeDateString(date);
                   let items = monthItems[dateKey];
                   const isSelected = date.getDate() === selectedDate;
-                  let isToday = date.getDate() === todaysDate.getDate();
+                  let isToday = dateKey === JustDate.toISOLikeDateString(todaysDate);
+
                   return <Day key={dateKey}
                     date={date}
                     index={idx}

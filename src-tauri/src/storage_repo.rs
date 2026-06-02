@@ -5,7 +5,7 @@ use crate::{
 use chrono::{DateTime, Local, Utc};
 use std::sync::Arc;
 use tauri::{AppHandle, Manager, State, Wry};
-use tauri_plugin_store::{Store};
+use tauri_plugin_store::Store;
 
 fn convert_date_to_key(date: String) -> String {
     // Date format is YYYY-MM-DDTHH:MM:SSZ when passed from frontend
@@ -47,14 +47,12 @@ fn get_store_with_fallback(
     }
 }
 
-
 // Get for one date
 #[tauri::command]
 pub async fn get_items_for_date(
     app: AppHandle<Wry>,
     date: DateTime<Utc>,
 ) -> Result<Vec<Item>, String> {
-
     let store_manager = app.state::<StoreManager<Wry>>();
     let (locale_date_str, date_key, month_key) = parse_date_keys(date);
 
@@ -78,22 +76,25 @@ pub async fn get_items_for_month(
     manager: State<'_, StoreManager<Wry>>,
     date: DateTime<Utc>,
 ) -> Result<Vec<DayItem>, String> {
-    
-    let (_locale_date_str, _key,    store_key) = parse_date_keys(date);
+    let (_locale_date_str, _key, store_key) = parse_date_keys(date);
     let store = get_store_with_fallback(Some(&app), &manager, &store_key, &_locale_date_str)?;
 
-    let month_items: Vec<DayItem> = store
+    let mut month_items: Vec<DayItem> = store
         .entries()
         .into_iter()
         .filter_map(
             |(k, v)| match serde_json::from_value::<Vec<Item>>(v.clone()) {
                 Ok(items) => {
-                    let day_items: Vec<DayItem> = items.into_iter().map(|item| DayItem {
-                        id: item.id,
-                        title: item.title,
-                        user_input: item.user_input,
-                        status: item.status,
-                    }).collect();
+                    let day_items: Vec<DayItem> = items
+                        .into_iter()
+                        .map(|item| DayItem {
+                            id: item.id,
+                            title: item.title,
+                            user_input: item.user_input,
+                            status: item.status,
+                            date: k.clone(),
+                        })
+                        .collect();
                     Some(day_items)
                 }
                 Err(e) => {
@@ -107,7 +108,7 @@ pub async fn get_items_for_month(
         )
         .flatten() // Flatten Vec<Vec<DayItem>> to Vec<DayItem>
         .collect();
-
+    month_items.sort_by(|a, b| a.date.cmp(&b.date).then(a.id.cmp(&b.id)));
     Ok(month_items)
 }
 
@@ -117,8 +118,7 @@ pub async fn get_full_items_for_month(
     manager: State<'_, StoreManager<Wry>>,
     date: DateTime<Utc>,
 ) -> Result<Vec<(String, Vec<Item>)>, String> {
-    
-    let (_locale_date_str, _key,    store_key) = parse_date_keys(date);
+    let (_locale_date_str, _key, store_key) = parse_date_keys(date);
     let store = get_store_with_fallback(Some(&app), &manager, &store_key, &_locale_date_str)?;
 
     let month_items: Vec<(String, Vec<Item>)> = store
@@ -126,9 +126,7 @@ pub async fn get_full_items_for_month(
         .into_iter()
         .filter_map(
             |(k, v)| match serde_json::from_value::<Vec<Item>>(v.clone()) {
-                Ok(items) => {
-                    Some((k, items))
-                }
+                Ok(items) => Some((k, items)),
                 Err(e) => {
                     println!(
                         "Deserialization failed for key {}: {:?}, value: {:?}",

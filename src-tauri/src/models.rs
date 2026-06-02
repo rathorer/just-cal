@@ -43,4 +43,5 @@ pub struct DayItem {
     pub title: String,
     pub user_input: String,
     pub status: ItemState,
+    pub date: String
 }
