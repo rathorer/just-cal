@@ -59,7 +59,7 @@ pub fn setup_new_store<R: Runtime>(app: &tauri::AppHandle<R>, date: &str) ->  Re
     let file_path = data_dir.join(filename); // or similar
     println!("Store setup started with file: {}", file_path.display());
     
-    //app.store will load or create store from filepath.
+    //app.store will load or create store from filepath, no need to call builder etc.
     let store = app.store(file_path).map_err(|e| e.to_string())?;
     // StoreBuilder::new(app, file_path)
     //     .build()
@@ -96,7 +96,8 @@ pub fn get_or_reload_store<R: Runtime>(app: &tauri::AppHandle<R>, date: &str) ->
             Ok(store) => Ok(store),
             Err(_) => {
                 // Fallback 2: Create a new empty store
-                setup_new_store(app, date)
+                //setup_new_store(app, date)
+                Err(format!("Not creating store to disk for this date: {}", date))
             }
         }
     }

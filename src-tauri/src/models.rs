@@ -5,7 +5,7 @@ use std::default::Default;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[repr(u8)]
-enum ItemState {
+pub enum ItemState {
     Draft = 0,
     #[default]
     Pending = 1,
@@ -30,16 +30,18 @@ impl TryFrom<u8> for ItemState {
 pub struct Item {
     pub id: u32,
     pub user_input: String,
-    title: String,
+    pub title: String,
     description: String,
-    status: ItemState,
+    pub status: ItemState,
     time: Option<DateTime<Utc>>,
     reminder: Option<DateTime<Utc>>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct DayItem {
-    id: u32,
-    title: String,
-    status: ItemState,
+    pub id: u32,
+    pub title: String,
+    pub user_input: String,
+    pub status: ItemState,
+    pub date: String
 }

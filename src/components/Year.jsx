@@ -2,6 +2,7 @@ import JustDate from './../utilities/justDate';
 import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import { Constants } from '../utilities/constants';
 import { useUserSettings } from "../contexts/UserSettingsContext";
+import ReadonlyRightSection from './ReadonlyRightSection';
 
 function Year(props) {
     const year = props.year;
@@ -13,6 +14,11 @@ function Year(props) {
     const [isDragging, setIsDragging] = useState(false);
     const [months, setMonths] = useState([]);
     const containerRef = useRef(null);
+    const selectedDate = new Date(year, prevSelectedMonth, 2);
+    const justDate = new JustDate(selectedDate, 'en-US');
+    const monthName = justDate.getMonthName();
+    const [isLoadingItems, setIsLoadingItems] = useState(false);
+    const [lastAgendaUpdate, setLastAgendaUpdate] = useState(null);
 
     const monthList = useMemo(() => {
         //let justDate = new JustDate(date);
@@ -94,6 +100,12 @@ function Year(props) {
             />
             {/* Right Section - Dynamic width */}
             <div style={{ width: `${100 - leftWidth}%` }} className="hidden lg:flex lg:flex-col bg-base-200 border-l border-base-200">
+                <ReadonlyRightSection
+                    year={year}
+                    month={prevSelectedMonth}
+                    monthName={monthName}
+                    selectedDate={selectedDate.getDate()}
+                    lastAgendaUpdate={lastAgendaUpdate}  />
             </div>
         </div >
     )
